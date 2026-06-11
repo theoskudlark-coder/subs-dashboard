@@ -137,6 +137,56 @@ tbody tr:hover td{background:var(--surface2)}
     </div>
     <div class="kgrid" id="kpiTiles"></div>
 
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- ── Subs Sales ROI ── -->
+    <div class="section-header" style="margin-top:24px">
+      <span class="section-header-text" style="color:var(--blue)">Subs Sales · ROI &amp; Financial Performance</span>
+      <div class="section-divider"></div>
+      <span style="font-size:10px;color:var(--text3);white-space:nowrap">Board 9812976093</span>
+    </div>
+    <div class="kgrid" id="roiKpis"></div>
+
+    <div style="margin-top:12px">
+    <div class="crow">
+      <div class="tpanel">
+        <div class="thead2"><div class="ptitle">ROI by status</div><div class="psub">Sold group breakdown</div></div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th class="l">Status</th>
+              <th>Items</th>
+              <th>Profitable</th>
+              <th>At loss</th>
+              <th>Total cost</th>
+              <th>Recovered</th>
+              <th>Net P&amp;L</th>
+              <th>ROI</th>
+            </tr></thead>
+            <tbody id="roiTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Loss Analysis ── -->
+      <div class="tpanel">
+        <div class="thead2"><div class="ptitle">Loss analysis · Spoiled &amp; Canceled</div><div class="psub">Unrecovered spend</div></div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th class="l">Status</th>
+              <th>Items</th>
+              <th>Total cost</th>
+              <th>Recovered</th>
+              <th>Net loss</th>
+              <th>Loss rate</th>
+            </tr></thead>
+            <tbody id="lossTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </div>
+
     <!-- ── Volume + Donut ── -->
     <div class="section-header">
       <span class="section-header-text">Order Volume by Agent</span>
@@ -224,56 +274,6 @@ tbody tr:hover td{background:var(--surface2)}
     <div class="tpanel">
       <div class="thead2"><div class="ptitle">New → Awaiting Response → Completed</div><div class="psub">Active pipeline depth</div></div>
       <div id="lifecycleRows"></div>
-    </div>
-
-    <!-- ════════════════════════════════════════════════════════ -->
-    <!-- ── Subs Sales ROI ── -->
-    <div class="section-header" style="margin-top:36px">
-      <span class="section-header-text" style="color:var(--blue)">Subs Sales · ROI &amp; Financial Performance</span>
-      <div class="section-divider"></div>
-      <span style="font-size:10px;color:var(--text3);white-space:nowrap">Board 9812976093</span>
-    </div>
-    <div class="kgrid" id="roiKpis"></div>
-
-    <div style="margin-top:12px">
-    <div class="crow">
-      <div class="tpanel">
-        <div class="thead2"><div class="ptitle">ROI by status</div><div class="psub">Sold group breakdown</div></div>
-        <div style="overflow-x:auto">
-          <table>
-            <thead><tr>
-              <th class="l">Status</th>
-              <th>Items</th>
-              <th>Profitable</th>
-              <th>At loss</th>
-              <th>Total cost</th>
-              <th>Recovered</th>
-              <th>Net P&amp;L</th>
-              <th>ROI</th>
-            </tr></thead>
-            <tbody id="roiTbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ── Loss Analysis ── -->
-      <div class="tpanel">
-        <div class="thead2"><div class="ptitle">Loss analysis · Spoiled &amp; Canceled</div><div class="psub">Unrecovered spend</div></div>
-        <div style="overflow-x:auto">
-          <table>
-            <thead><tr>
-              <th class="l">Status</th>
-              <th>Items</th>
-              <th>Total cost</th>
-              <th>Recovered</th>
-              <th>Net loss</th>
-              <th>Loss rate</th>
-            </tr></thead>
-            <tbody id="lossTbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
     </div>
 
   </div><!-- /content -->
