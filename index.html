@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sub Requests · Loss Mitigation Dashboard v7</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--surface:#13161e;--surface2:#1a1e28;--border:#252836;--text1:#e8eaf0;--text2:#9399a8;--text3:#5c6272;--blue:#4f8ef7;--green:#34d07a;--amber:#f0a93a;--red:#f05a5a;--purple:#a78bfa;--teal:#2dd4bf}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text1);font-family:'Inter',sans-serif;font-size:13px;min-height:100vh}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.header h1{font-size:15px;font-weight:600;flex:1;min-width:200px}
+.hbadge{font-size:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text3);padding:2px 8px;border-radius:10px;letter-spacing:.04em}
+.date-group{display:flex;align-items:center;gap:8px}
+.date-group label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+input[type=date]{background:var(--surface2);border:1px solid var(--border);color:var(--text1);padding:6px 10px;border-radius:6px;font-size:12px;font-family:inherit;cursor:pointer}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
+.btn{background:var(--blue);color:#fff;border:none;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap}
+.btn:hover{opacity:.88}
+.btn-sec{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.btn-sec:hover{background:var(--border)}
+#cacheTag{font-size:11px;color:var(--text3)}
+.main{max-width:1440px;margin:0 auto;padding:20px 24px}
+.statusbar{font-size:11px;color:var(--text3);margin-bottom:16px;min-height:16px}
+#errBar{background:#2a1215;border:1px solid #5a2020;border-radius:8px;color:var(--red);padding:10px 14px;margin-bottom:16px;font-size:12px;display:none}
+#loadingPanel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;display:none}
+.progress-wrap{background:var(--surface2);border-radius:4px;height:4px;overflow:hidden;margin:10px 0 6px}
+.progress-bar{background:var(--blue);height:100%;width:0%;transition:width .3s}
+.section-header{display:flex;align-items:center;gap:12px;margin:28px 0 14px}
+.section-header-text{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.section-divider{flex:1;height:1px;background:var(--border)}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kcard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.kcard .klabel{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px}
+.kcard .kval{font-size:22px;font-weight:700;line-height:1}
+.kcard .ksub{font-size:11px;color:var(--text3);margin-top:4px}
+.tpanel{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.thead2{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ptitle{font-size:13px;font-weight:600;color:var(--text1)}
+.psub{font-size:11px;color:var(--text3)}
+.crow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);font-weight:500;cursor:pointer;white-space:nowrap;user-select:none}
+th:first-child,th.l{text-align:left}
+th:hover{color:var(--text1)}
+td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;font-size:12px}
+td:first-child,td.l{text-align:left}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
+.tr-total td{background:var(--surface2);font-weight:600;border-top:1px solid var(--border)}
+.bg{background:#0a2e1a;color:var(--green);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;display:inline-block}
+.ba{background:#2a2010;color:var(--amber);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;display:inline-block}
+.br{background:#2a1215;color:var(--red);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;display:inline-block}
+.bp{background:#1e1830;color:var(--purple);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;display:inline-block}
+.bar-row{display:flex;align-items:center;gap:10px;padding:7px 14px;border-bottom:1px solid var(--border)}
+.bar-row:last-child{border-bottom:none}
+.bar-name{width:130px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);flex-shrink:0}
+.bar-wrap{flex:1;background:var(--surface2);border-radius:3px;height:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.bar-val{width:36px;text-align:right;font-size:12px;color:var(--text2);flex-shrink:0}
+.sbar-row{display:flex;align-items:center;gap:8px;padding:6px 14px;border-bottom:1px solid var(--border)}
+.sbar-row:last-child{border-bottom:none}
+.sbar-name{width:130px;font-size:12px;color:var(--text2);flex-shrink:0;overflow:hidden;text-overflow:ellipsis}
+.sbar-wrap{flex:1;display:flex;height:8px;border-radius:4px;overflow:hidden}
+.sbar-seg{height:100%}
+.sbar-info{font-size:11px;color:var(--text3);white-space:nowrap;min-width:90px;text-align:right}
+.sbar-legend{display:flex;gap:14px;padding:10px 14px;border-top:1px solid var(--border);flex-wrap:wrap}
+.sleg{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3)}
+.sleg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+#donutWrap{padding:16px;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
+.donut-legend{display:flex;flex-direction:column;gap:10px}
+.dl-item{display:flex;align-items:center;gap:8px}
+.dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dl-label{font-size:12px;color:var(--text2)}
+.dl-val{font-size:13px;font-weight:600;margin-left:4px}
+.roi-pos{color:var(--green)}
+.roi-neg{color:var(--red)}
+.roi-neu{color:var(--text3)}
+.lc-row{display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);gap:6px}
+.lc-row:last-child{border-bottom:none}
+.lc-name{width:130px;font-size:12px;color:var(--text2);flex-shrink:0;overflow:hidden;text-overflow:ellipsis}
+.lc-step{flex:1;text-align:center;font-size:13px;font-weight:600}
+.lc-step small{display:block;font-size:10px;color:var(--text3);font-weight:400;margin-top:2px}
+.lc-arrow{color:var(--text3);font-size:14px;flex-shrink:0}
+.status-pill{display:inline-block;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:500}
+@media(max-width:900px){.crow{grid-template-columns:1fr}}
+@media(max-width:600px){.kgrid{grid-template-columns:repeat(2,1fr)}.header h1{min-width:unset}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Sub Requests · Loss Mitigation Dashboard</h1>
+  <span class="hbadge">v7</span>
+  <div class="date-group">
+    <label>From</label>
+    <input type="date" id="dtStart">
+    <label>To</label>
+    <input type="date" id="dtEnd">
+  </div>
+  <button class="btn" onclick="reload()">Refresh</button>
+  <button class="btn btn-sec" onclick="clearCache()">Clear cache</button>
+  <span id="cacheTag"></span>
+</div>
+
+<div class="main">
+  <div id="errBar"></div>
+  <div id="loadingPanel">
+    <div style="font-size:13px;font-weight:500" id="loadMsg">Loading…</div>
+    <div class="progress-wrap"><div class="progress-bar" id="pBar"></div></div>
+    <div style="font-size:11px;color:var(--text3)" id="loadSub"></div>
+  </div>
+  <div class="statusbar" id="statusbar"></div>
+
+  <div id="content" style="display:none">
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- ── Dept Performance (subs-dept-performance) ── -->
+    <div class="section-header">
+      <span class="section-header-text" style="color:var(--green)">Dept Performance · Order Volume &amp; Success Rate</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="kgrid" id="deptKpis"></div>
+
+    <!-- ── Loss Mitigation (loss-mitigation-report) ── -->
+    <div class="section-header" style="margin-top:20px">
+      <span class="section-header-text" style="color:var(--purple)">Loss Mitigation · Completed Group KPIs</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="kgrid" id="lossMitKpis"></div>
+
+    <!-- ── Sub Requests: KPI Overview ── -->
+    <div class="section-header">
+      <span class="section-header-text">Sub Requests · Performance Overview</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="kgrid" id="kpiTiles"></div>
+
+    <!-- ── Volume + Donut ── -->
+    <div class="section-header">
+      <span class="section-header-text">Order Volume by Agent</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="crow">
+      <div class="tpanel">
+        <div class="thead2"><div class="ptitle">Volume · all agents</div><div class="psub">Grand total per agent</div></div>
+        <div id="volumeBars"></div>
+      </div>
+      <div class="tpanel">
+        <div class="thead2"><div class="ptitle">Success vs Cancelled</div><div class="psub">Department-wide</div></div>
+        <div id="donutWrap">
+          <canvas id="donutCanvas" width="120" height="120"></canvas>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Agent Breakdown ── -->
+    <div class="section-header">
+      <span class="section-header-text">Agent Breakdown</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="tpanel">
+      <div class="thead2"><div class="ptitle">Performance by agent</div><div class="psub">Click headers to sort</div></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th class="l" onclick="sortBy('name')">Agent</th>
+            <th onclick="sortBy('s1')">Completed</th>
+            <th onclick="sortBy('s2')">Pend.Adj</th>
+            <th onclick="sortBy('s3')">Awaiting</th>
+            <th onclick="sortBy('sT')">Success Total</th>
+            <th onclick="sortBy('can')">Cancelled</th>
+            <th onclick="sortBy('gT')">Grand Total</th>
+            <th onclick="sortBy('rate')">Rate</th>
+          </tr></thead>
+          <tbody id="mainTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Offer Status ── -->
+    <div class="section-header">
+      <span class="section-header-text">Offer Status by Agent</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="tpanel">
+      <div class="thead2"><div class="ptitle">Accepted / Rejected / Rescinded / Mutual Cancel</div></div>
+      <div id="offerBars"></div>
+      <div class="sbar-legend">
+        <div class="sleg"><div class="sleg-dot" style="background:var(--green)"></div>Accepted</div>
+        <div class="sleg"><div class="sleg-dot" style="background:var(--red)"></div>Rejected</div>
+        <div class="sleg"><div class="sleg-dot" style="background:var(--blue)"></div>Rescinded</div>
+        <div class="sleg"><div class="sleg-dot" style="background:var(--purple)"></div>Mutual Cancel</div>
+      </div>
+    </div>
+
+    <!-- ── Spend Ratio ── -->
+    <div class="section-header">
+      <span class="section-header-text">Agent Spend Ratio</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="tpanel">
+      <div class="thead2"><div class="ptitle">Total Sale vs New Ticket Amount</div><div class="psub">Ratio &lt;1.0 = spent less than original sale</div></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th class="l">Agent</th>
+            <th>Total Sale</th>
+            <th>New Ticket Amt</th>
+            <th>Ratio</th>
+          </tr></thead>
+          <tbody id="spendTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Lifecycle ── -->
+    <div class="section-header">
+      <span class="section-header-text">Item Lifecycle by Agent</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="tpanel">
+      <div class="thead2"><div class="ptitle">New → Awaiting Response → Completed</div><div class="psub">Active pipeline depth</div></div>
+      <div id="lifecycleRows"></div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- ── Subs Sales ROI ── -->
+    <div class="section-header" style="margin-top:36px">
+      <span class="section-header-text" style="color:var(--blue)">Subs Sales · ROI &amp; Financial Performance</span>
+      <div class="section-divider"></div>
+      <span style="font-size:10px;color:var(--text3);white-space:nowrap">Board 9812976093</span>
+    </div>
+    <div class="kgrid" id="roiKpis"></div>
+
+    <div style="margin-top:12px">
+    <div class="crow">
+      <div class="tpanel">
+        <div class="thead2"><div class="ptitle">ROI by status</div><div class="psub">Sold group breakdown</div></div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th class="l">Status</th>
+              <th>Items</th>
+              <th>Profitable</th>
+              <th>At loss</th>
+              <th>Total cost</th>
+              <th>Recovered</th>
+              <th>Net P&amp;L</th>
+              <th>ROI</th>
+            </tr></thead>
+            <tbody id="roiTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Loss Analysis ── -->
+      <div class="tpanel">
+        <div class="thead2"><div class="ptitle">Loss analysis · Spoiled &amp; Canceled</div><div class="psub">Unrecovered spend</div></div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th class="l">Status</th>
+              <th>Items</th>
+              <th>Total cost</th>
+              <th>Recovered</th>
+              <th>Net loss</th>
+              <th>Loss rate</th>
+            </tr></thead>
+            <tbody id="lossTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </div>
+
+  </div><!-- /content -->
+</div>
+
+<script>
+// ═══════ CONFIG ═══════════════════════════════════════════════════
+const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
+const BOARD_SR = 4969640884;   // Sub Requests
+const BOARD_SS = 9812976093;   // Subs Sales
+const CACHE_KEY = 'sub_requests_dash_v8';
+const CACHE_TTL = 30 * 60 * 1000;
+
+const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
+
+// Sub Requests — main performance groups
+const SR_GRPS = [
+  {gid:'new_group43773', key:'s1', label:'Completed'},
+  {gid:'new_group87137', key:'s2', label:'Pend.Adj'},
+  {gid:'new_group45268', key:'s3', label:'Awaiting Transfer'},
+  {gid:'new_group613',   key:'can', label:'Cancelled'},
+];
+// Sub Requests — lifecycle groups (counts only)
+const LC_GRPS = [
+  {gid:'topics',        key:'lcNew',      label:'New Requests'},
+  {gid:'group_title',   key:'lcAwaiting', label:'Awaiting Response'},
+];
+// Subs Sales — ROI groups
+const SS_GRPS = [
+  {gid:'group_title',    label:'Sold'},
+  {gid:'group_mktsz4af', label:'Spoiled'},
+  {gid:'group_mkv54q2j', label:'Canceled'},
+];
+
+const TOTAL_STEPS = SR_GRPS.length + LC_GRPS.length + SS_GRPS.length;
+let _steps = 0;
+
+let agents   = [];
+let ssData   = null;
+let deptData = null;
+
+// ═══════ HELPERS ══════════════════════════════════════════════════
+const fmt$  = v => '$' + Math.abs(Math.round(v)).toLocaleString('en-US');
+const fmtD$ = v => '$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtR  = v => v.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1});
+const pct   = v => fmtR(v) + '%';
+const sign$ = v => (v >= 0 ? '+' : '-') + fmt$(v);
+const signP = v => (v >= 0 ? '+' : '') + fmtR(v) + '%';
+const rc    = r => r >= 80 ? 'bg' : r >= 60 ? 'ba' : 'br';
+const rcol  = r => r >= 80 ? 'var(--green)' : r >= 60 ? 'var(--amber)' : 'var(--red)';
+const rClass= v => v > 0 ? 'roi-pos' : 'roi-neg';
+
+function showErr(m){const b=document.getElementById('errBar');b.textContent=m;b.style.display='block';}
+function hideErr(){document.getElementById('errBar').style.display='none';}
+function tick(msg, sub=''){
+  _steps++;
+  const pct = Math.round(_steps / TOTAL_STEPS * 100);
+  document.getElementById('pBar').style.width = pct + '%';
+  document.getElementById('loadMsg').textContent = msg;
+  document.getElementById('loadSub').textContent = sub;
+}
+
+// ═══════ API ══════════════════════════════════════════════════════
+async function gql(query) {
+  const r = await fetch('https://api.monday.com/v2', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json', Authorization: TOKEN},
+    body: JSON.stringify({query})
+  });
+  const j = await r.json();
+  if (j.errors) throw new Error(j.errors[0].message);
+  return j.data;
+}
+
+async function fetchItems(boardId, gid, start, end, colIds) {
+  const cols = colIds.map(c => `"${c}"`).join(',');
+  let items = [], cursor = null, first = true;
+  while (first || cursor) {
+    first = false;
+    // Monday API: cursor and query_params are mutually exclusive
+    const pageArgs = cursor
+      ? `limit:500,cursor:"${cursor}"`
+      : `limit:500,query_params:{rules:[{column_id:"group",compare_value:["${gid}"],operator:any_of},{column_id:"date4",compare_value:["${start}","${end}"],operator:between}]}`;
+    const q = `{boards(ids:[${boardId}]){items_page(${pageArgs}){cursor items{name column_values(ids:[${cols}]){id value text}}}}}`;
+    const d = await gql(q);
+    const pg = d.boards[0].items_page;
+    items = items.concat(pg.items);
+    cursor = pg.cursor || null;
+  }
+  return items;
+}
+
+// ═══════ PARSERS ══════════════════════════════════════════════════
+function cvMap(item) {
+  const m = {};
+  for (const c of item.column_values) m[c.id] = c;
+  return m;
+}
+function parsePeopleText(cv) {
+  if (!cv?.text) return [];
+  return cv.text.split(',').map(s => s.trim()).filter(Boolean);
+}
+function parseStatusIdx(cv) {
+  if (!cv?.value) return -1;
+  try { return JSON.parse(cv.value).index ?? -1; } catch(e) { return -1; }
+}
+function parseNum(cv) {
+  if (!cv?.text) return 0;
+  const clean = cv.text.replace(/[^0-9.\-]/g, '');
+  return parseFloat(clean) || 0;
+}
+
+// ═══════ AGENT MAP ════════════════════════════════════════════════
+function ensureAgent(map, name) {
+  if (!map[name]) map[name] = {
+    name, s1:0, s2:0, s3:0, can:0, sT:0, gT:0, rate:0,
+    accepted:0, rejected:0, rescinded:0, mutualCancel:0,
+    totalSale:0, newTicketAmt:0, lcNew:0, lcAwaiting:0
+  };
+  return map[name];
+}
+
+// ═══════ LOAD ══════════════════════════════════════════════════════
+async function loadData(start, end) {
+  const cacheK = `${CACHE_KEY}:${start}:${end}`;
+  const cached = localStorage.getItem(cacheK);
+  if (cached) {
+    try {
+      const {ts, a, s, d} = JSON.parse(cached);
+      if (Date.now() - ts < CACHE_TTL) {
+        agents = a; ssData = s; deptData = d;
+        document.getElementById('cacheTag').textContent = 'from cache ·';
+        return;
+      }
+    } catch(e) {}
+  }
+  document.getElementById('cacheTag').textContent = '';
+  document.getElementById('loadingPanel').style.display = 'block';
+  _steps = 0;
+  document.getElementById('pBar').style.width = '0%';
+
+  const agentMap = {};
+
+  // ─ Dept-level counters (all items, no agent filter) ──────
+  deptData = {s1:0, s2:0, s3:0, can:0, rescinded:0, totalSale:0, newTicketAmt:0, costCeiling:0};
+
+  // ─ Sub Requests main groups ───────────────────────────────
+  for (const grp of SR_GRPS) {
+    tick(`Loading ${grp.label}…`);
+    const items = await fetchItems(BOARD_SR, grp.gid, start, end, ['person','status81','numbers','numbers0']);
+    for (const item of items) {
+      const cv    = cvMap(item);
+      const names = parsePeopleText(cv['person']);
+      const sIdx  = parseStatusIdx(cv['status81']);
+      const ts    = parseNum(cv['numbers']);
+      const nt    = parseNum(cv['numbers0']);
+      const cf    = ts * 4;  // Cost Ceiling = Total Sale × 400% (MULTIPLY({numbers},400%))
+
+      // Dept totals — every item regardless of assignment
+      deptData[grp.key]++;
+      if (grp.key === 's1') {
+        deptData.totalSale    += ts;
+        deptData.newTicketAmt += nt;
+        deptData.costCeiling  += cf;
+      }
+      if (grp.key === 'can' && sIdx === 5) deptData.rescinded++;
+
+      for (const name of names) {
+        if (EXCL.includes(name)) continue;
+        const a = ensureAgent(agentMap, name);
+        a[grp.key]++;
+        if (grp.key === 'can') {
+          if (sIdx === 1) a.accepted++;
+          else if (sIdx === 2) a.rejected++;
+          else if (sIdx === 3) a.mutualCancel++;
+          else if (sIdx === 5) a.rescinded++;
+        }
+        a.totalSale    += ts;
+        a.newTicketAmt += nt;
+      }
+    }
+  }
+
+  // ─ Sub Requests lifecycle groups ─────────────────────────
+  for (const grp of LC_GRPS) {
+    tick(`Loading lifecycle: ${grp.label}…`);
+    const items = await fetchItems(BOARD_SR, grp.gid, start, end, ['person']);
+    for (const item of items) {
+      const cv = cvMap(item);
+      const names = parsePeopleText(cv['person']);
+      for (const name of names) {
+        if (EXCL.includes(name)) continue;
+        const a = ensureAgent(agentMap, name);
+        a[grp.key]++;
+      }
+    }
+  }
+
+  // ─ Finalize agent records ─────────────────────────────────
+  agents = Object.values(agentMap);
+  for (const a of agents) {
+    a.sT   = a.s1 + a.s2 + a.s3;
+    a.gT   = a.sT + a.can;
+    a.rate = a.gT > 0 ? a.sT / a.gT * 100 : 0;
+  }
+  agents = agents.filter(a => a.gT > 0 || a.lcNew > 0 || a.lcAwaiting > 0);
+
+  // ─ Subs Sales groups ──────────────────────────────────────
+  ssData = {
+    sold:    {count:0, cost:0, sold:0, profCount:0, lossCount:0},
+    partSold:{count:0, cost:0, sold:0},
+    notSold: {count:0, cost:0, sold:0},
+    spoiled: {count:0, cost:0, sold:0},
+    canceled:{count:0, cost:0, sold:0},
+  };
+
+  for (const grp of SS_GRPS) {
+    tick(`Loading Subs Sales: ${grp.label}…`);
+    const items = await fetchItems(BOARD_SS, grp.gid, start, end, ['status','numeric_mkts722d','numeric_mktsck8h']);
+    for (const item of items) {
+      const cv     = cvMap(item);
+      const lbl    = cv['status']?.text?.trim() || '';
+      const cost   = parseNum(cv['numeric_mkts722d']);
+      const sold   = parseNum(cv['numeric_mktsck8h']);
+      if      (lbl === 'Sold')          { ssData.sold.count++;    ssData.sold.cost+=cost;    ssData.sold.sold+=sold;    if(sold>cost)ssData.sold.profCount++;else ssData.sold.lossCount++; }
+      else if (lbl === 'Partially Sold'){ ssData.partSold.count++;ssData.partSold.cost+=cost;ssData.partSold.sold+=sold; }
+      else if (lbl === 'Not Sold')      { ssData.notSold.count++; ssData.notSold.cost+=cost; ssData.notSold.sold+=sold; }
+      else if (grp.label === 'Spoiled') { ssData.spoiled.count++; ssData.spoiled.cost+=cost; ssData.spoiled.sold+=sold; }
+      else if (grp.label === 'Canceled'){ ssData.canceled.count++;ssData.canceled.cost+=cost;ssData.canceled.sold+=sold; }
+    }
+  }
+
+  document.getElementById('loadingPanel').style.display = 'none';
+  localStorage.setItem(cacheK, JSON.stringify({ts:Date.now(), a:agents, s:ssData, d:deptData}));
+}
+
+// ═══════ RENDER: Dept Performance ════════════════════════════════
+function renderDeptKPIs() {
+  if (!deptData) return;
+  const successTotal = deptData.s1 + deptData.s2 + deptData.s3;
+  const grandTotal   = successTotal + deptData.can;
+  const successRate  = grandTotal > 0 ? successTotal / grandTotal * 100 : 0;
+  const cancelRate   = grandTotal > 0 ? deptData.can / grandTotal * 100 : 0;
+  const successColor = successRate >= 80 ? 'var(--green)' : successRate >= 60 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('deptKpis').innerHTML = `
+    <div class="kcard" style="border-color:var(--green)33">
+      <div class="klabel">Success Rate</div>
+      <div class="kval" style="color:${successColor};font-size:28px">${pct(successRate)}</div>
+      <div class="ksub">${successTotal.toLocaleString()} of ${grandTotal.toLocaleString()} orders</div>
+    </div>
+    <div class="kcard" style="border-color:var(--red)33">
+      <div class="klabel">Cancellation Rate</div>
+      <div class="kval" style="color:var(--red)">${pct(cancelRate)}</div>
+      <div class="ksub">${deptData.can.toLocaleString()} cancelled</div>
+    </div>
+    <div class="kcard"><div class="klabel">Completed</div><div class="kval" style="color:var(--green)">${deptData.s1.toLocaleString()}</div><div class="ksub">No action needed</div></div>
+    <div class="kcard"><div class="klabel">Awaiting Transfer</div><div class="kval" style="color:var(--blue)">${deptData.s3.toLocaleString()}</div></div>
+    <div class="kcard"><div class="klabel">Pending Adjustment</div><div class="kval" style="color:var(--amber)">${deptData.s2.toLocaleString()}</div></div>
+    <div class="kcard"><div class="klabel">Rescinded</div><div class="kval" style="color:var(--purple)">${deptData.rescinded.toLocaleString()}</div><div class="ksub">Within cancelled</div></div>`;
+}
+
+// ═══════ RENDER: Loss Mitigation ═════════════════════════════════
+function renderLossMitKPIs() {
+  if (!deptData) return;
+  const totalSale    = deptData.totalSale;
+  const newTicket    = deptData.newTicketAmt;
+  const ceiling      = deptData.costCeiling;
+  const mitigatedAmt = ceiling - newTicket;
+  const mitigatedPct = ceiling > 0 ? mitigatedAmt / ceiling * 100 : 0;
+  const actualSpend  = ceiling > 0 ? newTicket / ceiling * 100 : 0;
+  const ratio        = totalSale > 0 ? newTicket / totalSale : 0;
+  const mitigColor   = mitigatedPct >= 60 ? 'var(--green)' : mitigatedPct >= 40 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('lossMitKpis').innerHTML = `
+    <div class="kcard" style="border-color:var(--purple)33">
+      <div class="klabel">Mitigated Loss %</div>
+      <div class="kval" style="color:${mitigColor};font-size:28px">${pct(mitigatedPct)}</div>
+      <div class="ksub">of Cost Ceiling avoided</div>
+    </div>
+    <div class="kcard"><div class="klabel">Mitigated Amount</div><div class="kval" style="color:var(--green)">${fmt$(mitigatedAmt)}</div><div class="ksub">ceiling − new ticket</div></div>
+    <div class="kcard"><div class="klabel">Cost Ceiling</div><div class="kval">${fmt$(ceiling)}</div><div class="ksub">Max possible exposure</div></div>
+    <div class="kcard"><div class="klabel">Total Sale Value</div><div class="kval">${fmt$(totalSale)}</div><div class="ksub">Original order value</div></div>
+    <div class="kcard"><div class="klabel">New Ticket Amount</div><div class="kval">${fmt$(newTicket)}</div><div class="ksub">Actual spend · ${pct(actualSpend)} of ceiling</div></div>
+    <div class="kcard"><div class="klabel">Ticket / Sale Ratio</div><div class="kval ${ratio <= 1 ? 'roi-pos' : 'roi-neg'}">${fmtR(ratio)}x</div><div class="ksub">${ratio <= 1 ? 'Spent less than sale' : 'Spent more than sale'}</div></div>`;
+}
+
+// ═══════ RENDER: Sub Requests ═════════════════════════════════════
+function renderKPIs() {
+  const tot = agents.reduce((acc, a) => ({
+    sT: acc.sT+a.sT, can: acc.can+a.can, gT: acc.gT+a.gT,
+    ts: acc.ts+a.totalSale, nt: acc.nt+a.newTicketAmt
+  }), {sT:0,can:0,gT:0,ts:0,nt:0});
+  const rate  = tot.gT > 0 ? tot.sT/tot.gT*100 : 0;
+  const ratio = tot.ts  > 0 ? tot.nt/tot.ts     : 0;
+  document.getElementById('kpiTiles').innerHTML = `
+    <div class="kcard"><div class="klabel">Successful</div><div class="kval" style="color:var(--green)">${tot.sT.toLocaleString()}</div><div class="ksub">Completed + Adj + Awaiting</div></div>
+    <div class="kcard"><div class="klabel">Cancelled</div><div class="kval" style="color:var(--red)">${tot.can.toLocaleString()}</div></div>
+    <div class="kcard"><div class="klabel">Success Rate</div><div class="kval" style="color:${rcol(rate)}">${pct(rate)}</div><div class="ksub">${tot.gT.toLocaleString()} total orders</div></div>
+    <div class="kcard"><div class="klabel">Active Agents</div><div class="kval">${agents.length}</div></div>
+    <div class="kcard"><div class="klabel">Total Sale Value</div><div class="kval">${fmt$(tot.ts)}</div></div>
+    <div class="kcard"><div class="klabel">New Ticket Spend</div><div class="kval">${fmt$(tot.nt)}</div><div class="ksub">Ratio: ${fmtR(ratio)}x</div></div>`;
+}
+
+function renderBars() {
+  const sorted = [...agents].sort((a,b) => b.gT - a.gT);
+  const max = sorted[0]?.gT || 1;
+  document.getElementById('volumeBars').innerHTML = sorted.map(a => `
+    <div class="bar-row">
+      <div class="bar-name">${a.name.split(' ')[0]}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${a.gT/max*100}%;background:${rcol(a.rate)}"></div></div>
+      <div class="bar-val">${a.gT}</div>
+    </div>`).join('');
+}
+
+function renderDonut() {
+  const tot = agents.reduce((t,a) => ({s:t.s+a.sT, c:t.c+a.can}), {s:0,c:0});
+  const total = tot.s + tot.c || 1;
+  const cv  = document.getElementById('donutCanvas');
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,120,120);
+  const slices = [{v:tot.s,color:'#34d07a'},{v:tot.c,color:'#f05a5a'}];
+  let angle = -Math.PI/2;
+  for (const sl of slices) {
+    const sweep = sl.v/total*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(60,60); ctx.arc(60,60,48,angle,angle+sweep); ctx.closePath();
+    ctx.fillStyle = sl.color; ctx.fill(); angle += sweep;
+  }
+  ctx.beginPath(); ctx.arc(60,60,26,0,Math.PI*2); ctx.fillStyle='#13161e'; ctx.fill();
+  const r = tot.s/total*100;
+  document.getElementById('donutLegend').innerHTML = `
+    <div class="dl-item"><div class="dl-dot" style="background:var(--green)"></div><span class="dl-label">Successful <span class="dl-val">${tot.s.toLocaleString()}</span></span></div>
+    <div class="dl-item"><div class="dl-dot" style="background:var(--red)"></div><span class="dl-label">Cancelled <span class="dl-val">${tot.c.toLocaleString()}</span></span></div>
+    <div class="dl-item"><div class="dl-dot" style="background:transparent"></div><span class="dl-label">Rate: <span class="dl-val" style="color:${rcol(r)}">${pct(r)}</span></span></div>`;
+}
+
+let _sortCol='rate', _sortDir=-1;
+function sortBy(col){if(_sortCol===col)_sortDir*=-1;else{_sortCol=col;_sortDir=-1;}renderMainTable();}
+
+function renderMainTable() {
+  const sorted = [...agents].sort((a,b) => {
+    const va=a[_sortCol]??'', vb=b[_sortCol]??'';
+    return typeof va==='string' ? va.localeCompare(vb)*_sortDir : (va-vb)*_sortDir;
+  });
+  const T = sorted.reduce((t,a) => ({s1:t.s1+a.s1,s2:t.s2+a.s2,s3:t.s3+a.s3,sT:t.sT+a.sT,can:t.can+a.can,gT:t.gT+a.gT}),{s1:0,s2:0,s3:0,sT:0,can:0,gT:0});
+  const tr = T.gT>0?T.sT/T.gT*100:0;
+  document.getElementById('mainTbody').innerHTML =
+    sorted.map(a=>`<tr>
+      <td class="l">${a.name}</td>
+      <td>${a.s1}</td><td>${a.s2}</td><td>${a.s3}</td>
+      <td><strong>${a.sT}</strong></td>
+      <td style="color:var(--red)">${a.can}</td>
+      <td>${a.gT}</td>
+      <td><span class="${rc(a.rate)}">${pct(a.rate)}</span></td>
+    </tr>`).join('') +
+    `<tr class="tr-total"><td class="l">Team Total</td><td>${T.s1}</td><td>${T.s2}</td><td>${T.s3}</td><td>${T.sT}</td><td style="color:var(--red)">${T.can}</td><td>${T.gT}</td><td><span class="${rc(tr)}">${pct(tr)}</span></td></tr>`;
+}
+
+function renderOfferStatus() {
+  const sorted = [...agents].filter(a=>a.can>0).sort((a,b)=>b.can-a.can);
+  document.getElementById('offerBars').innerHTML = sorted.map(a => {
+    const tot = a.accepted+a.rejected+a.rescinded+a.mutualCancel || 1;
+    return `<div class="sbar-row">
+      <div class="sbar-name">${a.name.split(' ')[0]}</div>
+      <div class="sbar-wrap">
+        <div class="sbar-seg" style="width:${a.accepted/tot*100}%;background:var(--green)"></div>
+        <div class="sbar-seg" style="width:${a.rejected/tot*100}%;background:var(--red)"></div>
+        <div class="sbar-seg" style="width:${a.rescinded/tot*100}%;background:var(--blue)"></div>
+        <div class="sbar-seg" style="width:${a.mutualCancel/tot*100}%;background:var(--purple)"></div>
+      </div>
+      <div class="sbar-info">${a.accepted}A · ${a.rejected}R · ${a.rescinded}Rc · ${a.mutualCancel}MC</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSpendRatio() {
+  const sorted = [...agents].filter(a=>a.totalSale>0||a.newTicketAmt>0).sort((a,b)=>b.totalSale-a.totalSale);
+  const T = sorted.reduce((t,a)=>({ts:t.ts+a.totalSale,nt:t.nt+a.newTicketAmt}),{ts:0,nt:0});
+  const teamRatio = T.ts>0?T.nt/T.ts:0;
+  document.getElementById('spendTbody').innerHTML =
+    sorted.map(a => {
+      const ratio = a.totalSale>0?a.newTicketAmt/a.totalSale:0;
+      return `<tr><td class="l">${a.name}</td><td>${fmt$(a.totalSale)}</td><td>${fmt$(a.newTicketAmt)}</td><td class="${ratio<=1?'roi-pos':'roi-neg'}">${fmtR(ratio)}x</td></tr>`;
+    }).join('') +
+    `<tr class="tr-total"><td class="l">Team Total</td><td>${fmt$(T.ts)}</td><td>${fmt$(T.nt)}</td><td class="${teamRatio<=1?'roi-pos':'roi-neg'}">${fmtR(teamRatio)}x</td></tr>`;
+}
+
+function renderLifecycle() {
+  const sorted = [...agents].filter(a=>a.lcNew>0||a.lcAwaiting>0||a.sT>0).sort((a,b)=>b.lcNew-a.lcNew);
+  document.getElementById('lifecycleRows').innerHTML = sorted.map(a => `
+    <div class="lc-row">
+      <div class="lc-name">${a.name.split(' ')[0]}</div>
+      <div class="lc-step" style="color:var(--amber)">${a.lcNew}<small>New</small></div>
+      <div class="lc-arrow">→</div>
+      <div class="lc-step" style="color:var(--blue)">${a.lcAwaiting}<small>Awaiting</small></div>
+      <div class="lc-arrow">→</div>
+      <div class="lc-step" style="color:var(--green)">${a.sT}<small>Complete</small></div>
+    </div>`).join('');
+}
+
+// ═══════ RENDER: Subs Sales ROI ═══════════════════════════════════
+function renderROIKPIs() {
+  if (!ssData) return;
+  const combCost = ssData.sold.cost + ssData.partSold.cost;
+  const combSold = ssData.sold.sold + ssData.partSold.sold;
+  const combNet  = combSold - combCost;
+  const combROI  = combCost > 0 ? combNet/combCost*100 : 0;
+  const spoilLoss = ssData.spoiled.cost - ssData.spoiled.sold;
+  const canxLoss  = ssData.canceled.cost - ssData.canceled.sold;
+  document.getElementById('roiKpis').innerHTML = `
+    <div class="kcard"><div class="klabel">Combined ROI (Sold)</div><div class="kval ${rClass(combROI)}">${signP(combROI)}</div><div class="ksub">Sold + Partially Sold</div></div>
+    <div class="kcard"><div class="klabel">Total Sourcing Cost</div><div class="kval">${fmt$(combCost)}</div><div class="ksub">Sold groups only</div></div>
+    <div class="kcard"><div class="klabel">Total Recovered</div><div class="kval">${fmt$(combSold)}</div></div>
+    <div class="kcard"><div class="klabel">Net P&amp;L (sold)</div><div class="kval ${rClass(combNet)}">${sign$(combNet)}</div></div>
+    <div class="kcard"><div class="klabel">Spoiled Loss</div><div class="kval roi-neg">${fmt$(spoilLoss)}</div><div class="ksub">${ssData.spoiled.count} items</div></div>
+    <div class="kcard"><div class="klabel">Canceled Loss</div><div class="kval roi-neg">${fmt$(canxLoss)}</div><div class="ksub">${ssData.canceled.count} items</div></div>`;
+}
+
+function pill(label, color) {
+  return `<span class="status-pill" style="background:${color}22;color:${color}">${label}</span>`;
+}
+
+function renderROITable() {
+  if (!ssData) return;
+  function row(label, color, d, showPL) {
+    const net = d.sold - d.cost;
+    const roi = d.cost > 0 ? net/d.cost*100 : 0;
+    const plCols = showPL
+      ? `<td>${d.profCount}</td><td style="color:var(--red)">${d.lossCount}</td>`
+      : `<td>—</td><td>—</td>`;
+    return `<tr><td class="l">${pill(label,color)}</td><td>${d.count}</td>${plCols}
+      <td>${fmt$(d.cost)}</td><td>${fmt$(d.sold)}</td>
+      <td class="${rClass(net)}">${sign$(net)}</td>
+      <td class="${rClass(roi)}">${signP(roi)}</td></tr>`;
+  }
+  const cC = ssData.sold.cost+ssData.partSold.cost;
+  const cS = ssData.sold.sold+ssData.partSold.sold;
+  const cN = cS-cC, cR = cC>0?cN/cC*100:0;
+  document.getElementById('roiTbody').innerHTML =
+    row('Sold','var(--green)',ssData.sold,true) +
+    row('Partially Sold','var(--purple)',ssData.partSold,false) +
+    (ssData.notSold.count>0 ? row('Not Sold','var(--text3)',ssData.notSold,false) : '') +
+    `<tr class="tr-total"><td class="l">Combined</td><td>${ssData.sold.count+ssData.partSold.count}</td><td>—</td><td>—</td>
+      <td>${fmt$(cC)}</td><td>${fmt$(cS)}</td>
+      <td class="${rClass(cN)}">${sign$(cN)}</td>
+      <td class="${rClass(cR)}">${signP(cR)}</td></tr>`;
+}
+
+function renderLossTable() {
+  if (!ssData) return;
+  function row(label, color, d) {
+    const loss = d.cost - d.sold;
+    const rate = d.cost > 0 ? loss/d.cost*100 : 0;
+    return `<tr><td class="l">${pill(label,color)}</td><td>${d.count}</td>
+      <td>${fmt$(d.cost)}</td><td>${fmt$(d.sold)}</td>
+      <td class="roi-neg">${fmt$(loss)}</td>
+      <td class="roi-neg">${pct(rate)}</td></tr>`;
+  }
+  const cC = ssData.spoiled.cost+ssData.canceled.cost;
+  const cS = ssData.spoiled.sold+ssData.canceled.sold;
+  const cL = cC-cS, cR = cC>0?cL/cC*100:0;
+  document.getElementById('lossTbody').innerHTML =
+    row('Spoiled','var(--amber)',ssData.spoiled) +
+    row('Canceled','var(--red)',ssData.canceled) +
+    `<tr class="tr-total"><td class="l">Combined</td>
+      <td>${ssData.spoiled.count+ssData.canceled.count}</td>
+      <td>${fmt$(cC)}</td><td>${fmt$(cS)}</td>
+      <td class="roi-neg">${fmt$(cL)}</td>
+      <td class="roi-neg">${pct(cR)}</td></tr>`;
+}
+
+// ======= ORCHESTRATE =============================================
+function renderAll() {
+  renderDeptKPIs();
+  renderLossMitKPIs();
+  renderKPIs();
+  renderBars();
+  renderDonut();
+  renderMainTable();
+  renderOfferStatus();
+  renderSpendRatio();
+  renderLifecycle();
+  renderROIKPIs();
+  renderROITable();
+  renderLossTable();
+  document.getElementById('content').style.display = 'block';
+  const d1 = document.getElementById('dtStart').value;
+  const d2 = document.getElementById('dtEnd').value;
+  const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('statusbar').textContent =
+    `${d1} → ${d2}  ·  ${agents.length} agents  ·  last loaded ${ts}`;
+}
+
+async function reload() {
+  hideErr();
+  document.getElementById('content').style.display = 'none';
+  const start = document.getElementById('dtStart').value;
+  const end   = document.getElementById('dtEnd').value;
+  if (!start || !end) { showErr('Please select a date range.'); return; }
+  try {
+    await loadData(start, end);
+    renderAll();
+  } catch(e) {
+    document.getElementById('loadingPanel').style.display = 'none';
+    showErr('Error loading data: ' + e.message);
+    console.error(e);
+  }
+}
+
+function clearCache() {
+  Object.keys(localStorage).filter(k => k.startsWith(CACHE_KEY)).forEach(k => localStorage.removeItem(k));
+  document.getElementById('cacheTag').textContent = 'cache cleared';
+  setTimeout(() => document.getElementById('cacheTag').textContent = '', 2500);
+}
+
+// ======= INIT ====================================================
+(function init() {
+  const now   = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  document.getElementById('dtStart').value = new Date(y, m, 1).toISOString().split('T')[0];
+  document.getElementById('dtEnd').value   = new Date(y
