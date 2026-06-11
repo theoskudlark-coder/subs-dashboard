@@ -396,10 +396,15 @@ function ensureAgent(map, name) {
   return map[name];
 }
 
+// ═══════ LOCALSTORAGE SAFE WRAPPERS (needed in sandboxed iframes) ═══
+function _lsGet(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
+function _lsSet(k,v){ try{localStorage.setItem(k,v);}catch(e){} }
+function _lsKeys(){ try{return Object.keys(localStorage);}catch(e){return [];} }
+
 // ═══════ LOAD ══════════════════════════════════════════════════════
 async function loadData(start, end) {
   const cacheK = `${CACHE_KEY}:${start}:${end}`;
-  const cached = localStorage.getItem(cacheK);
+  const cached = _lsGet(cacheK);
   if (cached) {
     try {
       const {ts, a, s, d} = JSON.parse(cached);
@@ -507,7 +512,7 @@ async function loadData(start, end) {
   }
 
   document.getElementById('loadingPanel').style.display = 'none';
-  localStorage.setItem(cacheK, JSON.stringify({ts:Date.now(), a:agents, s:ssData, d:deptData}));
+  _lsSet(cacheK, JSON.stringify({ts:Date.now(), a:agents, s:ssData, d:deptData}));
 }
 
 // ═══════ RENDER: Dept Performance ════════════════════════════════
@@ -782,7 +787,7 @@ async function reload() {
 }
 
 function clearCache() {
-  Object.keys(localStorage).filter(k => k.startsWith(CACHE_KEY)).forEach(k => localStorage.removeItem(k));
+  _lsKeys().filter(k => k.startsWith(CACHE_KEY)).forEach(k => { try{localStorage.removeItem(k);}catch(e){} });
   document.getElementById('cacheTag').textContent = 'cache cleared';
   setTimeout(() => document.getElementById('cacheTag').textContent = '', 2500);
 }
