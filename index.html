@@ -522,7 +522,7 @@ function renderDeptKPIs() {
   const cancelRate   = grandTotal > 0 ? deptData.can / grandTotal * 100 : 0;
   const successColor = successRate >= 80 ? 'var(--green)' : successRate >= 60 ? 'var(--amber)' : 'var(--red)';
   document.getElementById('deptKpis').innerHTML = `
-    <div class="kcard" style="border-color:var(--green#33">
+    <div class="kcard" style="border-color:var(--green)33">
       <div class="klabel">Success Rate</div>
       <div class="kval" style="color:${successColor};font-size:28px">${pct(successRate)}</div>
       <div class="ksub">${successTotal.toLocaleString()} of ${grandTotal.toLocaleString()} orders</div>
