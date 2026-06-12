@@ -20,7 +20,7 @@ SR_GROUPS = ['new_group43773', 'new_group87137', 'new_group45268', 'new_group613
 SS_GROUPS = ['group_title', 'group_mktsz4af', 'group_mkv54q2j']
 
 SR_COLS = ['person', 'status81', 'numbers', 'numbers0', 'date4']
-SS_COLS = ['status', 'numeric_mkts722d', 'numeric_mktsck8h', 'date4']
+SS_COLS = ['status', 'numeric_mkts722d', 'numeric_mktsk8h', 'date4']
 
 
 def gql(query):
@@ -33,30 +33,32 @@ def gql(query):
     with urllib.request.urlopen(req, timeout=60) as resp:
         data = json.loads(resp.read().decode('utf-8'))
     if 'errors' in data:
-        raise RuntimeError(f'GraphQL error: {data["errors"]}')
+        raise RuntimeError('GraphQL error: ' + str(data['errors']))
     return data['data']
 
 
 def fetch_group(board_id, group_id, col_ids):
-    cols = ','.join(f'"{c}"' for c in col_ids)
+    cols = ','.join('"' + c + '"' for c in col_ids)
     items, cursor, first = [], None, True
     while first or cursor:
         first = False
         if cursor:
-            page_args = f'limit:500,cursor:"{cursor}"'
+            page_args = 'limit:500,cursor:"' + cursor + '"'
         else:
             page_args = (
-                f'limit:500,query_params:{{rules:[{{'
-                f'column_id:"group",compare_value:["{group_id}"],operator:any_of'
-                f'}}]}}'
+                'limit:500,query_params:{rules:[{'
+                'column_id:"group",compare_value:["' + group_id + '"],operator:any_of'
+                '}]}'
             )
-        q = (f'{{boards(ids:[{board_id}]){{items_page({page_args})'
-             f'{{cursor items{{name column_values(ids:[{cols}]){{id value text}}}}}}}}}')
+        q = (
+            '{boards(ids:[' + str(board_id) + ']){items_page(' + page_args + ')'
+            '{cursor items{name column_values(ids:[' + cols + ']){id value text}}}}}'
+        )
         data = gql(q)
         pg = data['boards'][0]['items_page']
         items.extend(pg['items'])
         cursor = pg.get('cursor') or None
-        print(f'  {group_id}: {len(items)} items so far...')
+        print('  ' + group_id + ': ' + str(len(items)) + ' items so far...')
     return items
 
 
@@ -67,23 +69,23 @@ result = {
 }
 
 for gid in SR_GROUPS:
-    print(f'Fetching SR {gid}')
+    print('Fetching SR ' + gid)
     try:
         result['board_sr'][gid] = fetch_group(BOARD_SR, gid, SR_COLS)
     except Exception as e:
-        print(f'  WARNING: {e}', file=sys.stderr)
+        print('  WARNING: ' + str(e), file=sys.stderr)
         result['board_sr'][gid] = []
 
 for gid in SS_GROUPS:
-    print(f'Fetching SS {gid}')
+    print('Fetching SS ' + gid)
     try:
         result['board_ss'][gid] = fetch_group(BOARD_SS, gid, SS_COLS)
     except Exception as e:
-        print(f'  WARNING: {e}', file=sys.stderr)
+        print('  WARNING: ' + str(e), file=sys.stderr)
         result['board_ss'][gid] = []
 
 with open('data.json', 'w') as f:
     json.dump(result, f)
 
-total = sum(len(v) for v in result[)board_sr'].values()) + sum(len(v) for v in result['board_ss'].values())
-print(f'Done — {total} total items written to data.json')
+total = sum(len(v) for v in result['board_sr'].values()) + sum(len(v) for v in result['board_ss'].values())
+print('Done - ' + str(total) + ' total items written to data.json')
