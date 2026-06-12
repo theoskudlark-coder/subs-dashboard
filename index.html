@@ -41,7 +41,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
 .psub{font-size:11px;color:var(--text3)}
 .crow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
 table{width:100%;border-collapse:collapse}
-th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);font-weight:500;cursor:pointer;white-space:nowrap;user-select:none}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);font-weight:500;cursor:pointer;white-space:nowraw;user-select:none}
 th:first-child,th.l{text-align:left}
 th:hover{color:var(--text1)}
 td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;font-size:12px}
@@ -282,89 +282,30 @@ tbody tr:hover td{background:var(--surface2)}
 
 <script>
 // ═══════ CONFIG ═══════════════════════════════════════════════════
-const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU7MjEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
-const BOARD_SR = 4969640884;   // Sub Requests
-const BOARD_SS = 9812976093;   // Subs Sales
-const CACHE_KEY = 'sub_requests_dash_v8';
-const CACHE_TTL = 30 * 60 * 1000;
+// ═══════ DATA LOADER (reads from data.json, no direct API calls) ══════
+let _jsonCache = null;
+let _jsonCacheTs = 0;
 
-const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
-
-// Sub Requests — main performance groups
-const SR_GRPS = [
-  {gid:'new_group43773', key:'s1', label:'Completed'},
-  {gid:'new_group87137', key:'s2', label:'Pend.Adj'},
-  {gid:'new_group45268', key:'s3', label:'Awaiting Transfer'},
-  {gid:'new_group613',   key:'can', label:'Cancelled'},
-];
-// Sub Requests — lifecycle groups (counts only)
-const LC_GRPS = [
-  {gid:'topics',        key:'lcNew',      label:'New Requests'},
-  {gid:'group_title',   key:'lcAwaiting', label:'Awaiting Response'},
-];
-// Subs Sales — ROI groups
-const SS_GRPS = [
-  {gid:'group_title',    label:'Sold'},
-  {gid:'group_mktsz4af', label:'Spoiled'},
-  {gid:'group_mkv54q2j', label:'Canceled'},
-];
-
-const TOTAL_STEPS = SR_GRPS.length + LC_GRPS.length + SS_GRPS.length;
-let _steps = 0;
-
-let agents   = [];
-let ssData   = null;
-let deptData = null;
-
-// ═══════ HELPERS ══════════════════════════════════════════════════
-const fmt$  = v => '$' + Math.abs(Math.round(v)).toLocaleString('en-US');
-const fmtD$ = v => '$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-const fmtR  = v => v.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1});
-const pct   = v => fmtR(v) + '%';
-const sign$ = v => (v >= 0 ? '+' : '-') + fmt$(v);
-const signP = v => (v >= 0 ? '+' : '') + fmtR(v) + '%';
-const rc    = r => r >= 80 ? 'bg' : r >= 60 ? 'ba' : 'br';
-const rcol  = r => r >= 80 ? 'var(--green)' : r >= 60 ? 'var(--amber)' : 'var(--red)';
-const rClass= v => v > 0 ? 'roi-pos' : 'roi-neg';
-
-function showErr(m){const b=document.getElementById('errBar');b.textContent=m;b.style.display='block';}
-function hideErr(){document.getElementById('errBar').style.display='none';}
-function tick(msg, sub=''){
-  _steps++;
-  const pct = Math.round(_steps / TOTAL_STEPS * 100);
-  document.getElementById('pBar').style.width = pct + '%';
-  document.getElementById('loadMsg').textContent = msg;
-  document.getElementById('loadSub').textContent = sub;
-}
-
-// ═══════ API ══════════════════════════════════════════════════════
-async function gql(query) {
-  const r = await fetch('https://api.monday.com/v2', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json', Authorization: TOKEN},
-    body: JSON.stringify({query})
-  });
-  const j = await r.json();
-  if (j.errors) throw new Error(j.errors[0].message);
-  return j.data;
+async function _getJsonData() {
+  const now = Date.now();
+  if (_jsonCache && now - _jsonCacheTs < CACHE_TTL) return _jsonCache;
+  const r = await fetch('./data.json?v=' + Math.floor(now / CACHE_TTL));
+  if (!r.ok) throw new Error('data.json not available (' + r.status + ')');
+  _jsonCache = await r.json();
+  _jsonCacheTs = now;
+  return _jsonCache;
 }
 
 async function fetchItems(boardId, gid, start, end, colIds) {
-  const cols = colIds.map(c => `"${c}"`).join(',');
-  let items = [], cursor = null, first = true;
-  while (first || cursor) {
-    first = false;
-    // Monday API: cursor and query_params are mutually exclusive
-    const pageArgs = cursor
-      ? `limit:500,cursor:"${cursor}"`
-      : `limit:500,query_params:{rules:[{column_id:"group",compare_value:["${gid}"],operator:any_of},{column_id:"date4",compare_value:["${start}","${end}"],operator:between}]}`;
-    const q = `{boards(ids:[${boardId}]){items_page(${pageArgs}){cursor items{name column_values(ids:[${cols}]){id value text}}}}}`;
-    const d = await gql(q);
-    const pg = d.boards[0].items_page;
-    items = items.concat(pg.items);
-    cursor = pg.cursor || null;
-  }
-  return items;
+  const data = await _getJsonData();
+  const store = boardId === BOARD_SR ? data.board_sr : data.board_ss;
+  const items = (store && store[gid]) ? store[gid] : [];
+  return items.filter(item => {
+    const cv = item.column_values.find(c => c.id === 'date4');
+    if (!cv || !cv.value) return false;
+    try { const d = JSON.parse(cv.value).date; return d >= start && d <= end; }
+    catch(e) { return false; }
+  });
 }
 
 // ═══════ PARSERS ══════════════════════════════════════════════════
@@ -696,7 +637,7 @@ function renderLifecycle() {
   document.getElementById('lifecycleRows').innerHTML = sorted.map(a => `
     <div class="lc-row">
       <div class="lc-name">${a.name.split(' ')[0]}</div>
-      <div class="lc-step" style="color:var(--amber)'>${a.lcNew}<small>New</small></div>
+      <div class="lc-step" style="color:var(--amber)">${a.lcNew}<small>New</small></div>
       <div class="lc-arrow">→</div>
       <div class="lc-step" style="color:var(--blue)">${a.lcAwaiting}<small>Awaiting</small></div>
       <div class="lc-arrow">→</div>
@@ -829,4 +770,4 @@ function clearCache() {
 })();
 </script>
 </body>
-</html>
+</html
