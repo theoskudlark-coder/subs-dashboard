@@ -282,6 +282,9 @@ tbody tr:hover td{background:var(--surface2)}
 
 <script>
 // âââââââ CONFIG âââââââââââââââââââââââââââââââââââââââââââââââââââ
+const CACHE_KEY = 'sub_requests_dash_v8';
+const CACHE_TTL = 30 * 60 * 1000;
+
 // âââââââ DATA LOADER (reads from data.json, no direct API calls) ââââââ
 let _jsonCache = null;
 let _jsonCacheTs = 0;
