@@ -1,0 +1,27 @@
+name: Fetch Monday Data
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch data from Monday.com
+        env:
+          MONDAY_TOKEN: ${{ secrets.MONDAY_TOKEN }}
+        run: python fetch_data.py
+
+      - name: Commit data.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          git diff --cached --quiet || git commit -m "chore: refresh dashboard data [skip ci]"
+          git push
