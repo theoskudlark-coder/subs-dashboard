@@ -444,7 +444,7 @@ async function loadData(start, end) {
         deptData.newTicketAmt += nt;
         deptData.costCeiling  += cf;
       }
-      if (grp.key === 'can' && sIdx === 5) deptData.rescinded++;
+      if (grp.key === 'can' && sIdx === 3) deptData.rescinded++;
 
       for (const name of names) {
         if (EXCL.includes(name)) continue;
@@ -453,8 +453,8 @@ async function loadData(start, end) {
         if (grp.key === 'can') {
           if (sIdx === 1) a.accepted++;
           else if (sIdx === 2) a.rejected++;
-          else if (sIdx === 3) a.mutualCancel++;
-          else if (sIdx === 5) a.rescinded++;
+          else if (sIdx === 3) a.rescinded++;
+          else if (sIdx === 4) a.mutualCancel++;
         }
         a.totalSale    += ts;
         a.newTicketAmt += nt;
