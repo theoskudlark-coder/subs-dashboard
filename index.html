@@ -276,6 +276,7 @@ tbody tr:hover td{background:var(--surface2)}
       <div id="lifecycleRows"></div>
     </div>
 
+
   </div><!-- /content -->
 </div>
 
@@ -798,7 +799,8 @@ function clearCache() {
   const y = now.getFullYear(), m = now.getMonth();
   document.getElementById('dtStart').value = new Date(y, m, 1).toISOString().split('T')[0];
   document.getElementById('dtEnd').value   = new Date(y, m+1, 0).toISOString().split('T')[0];
+  reload();
 })();
 </script>
 </body>
-</html>
+</html
