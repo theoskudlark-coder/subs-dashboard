@@ -36,7 +36,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
 .kcard .kval{font-size:22px;font-weight:700;line-height:1}
 .kcard .ksub{font-size:11px;color:var(--text3);margin-top:4px}
 .tpanel{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
-.thead2{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align.items:center;justify-content:space-between;gap:8px}
+.thead2{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
 .ptitle{font-size:13px;font-weight:600;color:var(--text1)}
 .psub{font-size:11px;color:var(--text3)}
 .crow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
@@ -91,7 +91,7 @@ tbody tr:hover td{background:var(--surface2)}
 <body>
 
 <div class="header">
-  <h1>Sub Requests · Lost Mitigation Dashboard</h1>
+  <h1>Sub Requests · Loss Mitigation Dashboard</h1>
   <span class="hbadge">v7</span>
   <div class="date-group">
     <label>From</label>
@@ -337,7 +337,7 @@ function tick(msg, sub=''){
 }
 
 // ═══════ API ══════════════════════════════════════════════════════
-// ═══════ DATA LOADER (reads from data.json — direct API calls) ═══
+// ═══════ DATA LOADER (reads from data.json — no direct API calls) ═══
 let _jsonCache = null, _jsonCacheTs = 0;
 async function _getJsonData() {
   const now = Date.now();
@@ -401,7 +401,7 @@ function _lsKeys(){ try{return Object.keys(localStorage);}catch(e){return [];} }
 
 // ═══════ LOAD ══════════════════════════════════════════════════════
 async function loadData(start, end) {
-  const caccacheK = `${CACHE_KEY}:${start}:${end}`;
+  const cacheK = `${CACHE_KEY}:${start}:${end}`;
   const cached = _lsGet(cacheK);
   if (cached) {
     try {
@@ -520,9 +520,9 @@ function renderDeptKPIs() {
   const grandTotal   = successTotal + deptData.can;
   const successRate  = grandTotal > 0 ? successTotal / grandTotal * 100 : 0;
   const cancelRate   = grandTotal > 0 ? deptData.can / grandTotal * 100 : 0;
-  const successColor = successRate >= 80 ? 'var(--green)" : successRate >= 60 ? 'var(--amber)' : 'var(--red)';
+  const successColor = successRate >= 80 ? 'var(--green)' : successRate >= 60 ? 'var(--amber)' : 'var(--red)';
   document.getElementById('deptKpis').innerHTML = `
-    <div class="kcard" style="border-color:var(--green)33">
+    <div class="kcard" style="border-color:var(--green#33">
       <div class="klabel">Success Rate</div>
       <div class="kval" style="color:${successColor};font-size:28px">${pct(successRate)}</div>
       <div class="ksub">${successTotal.toLocaleString()} of ${grandTotal.toLocaleString()} orders</div>
@@ -538,7 +538,7 @@ function renderDeptKPIs() {
     <div class="kcard"><div class="klabel">Rescinded</div><div class="kval" style="color:var(--purple)">${deptData.rescinded.toLocaleString()}</div><div class="ksub">Within cancelled</div></div>`;
 }
 
-// ═══════ RENDER: Loss Mitigation ════════════════════════════════
+// ═══════ RENDER: Loss Mitigation ═════════════════════════════════
 function renderLossMitKPIs() {
   if (!deptData) return;
   const totalSale    = deptData.totalSale;
@@ -580,7 +580,7 @@ function renderKPIs() {
 }
 
 function renderBars() {
-  const sorted = [...agents].sort((a,b) => b.gT - .gTa.gT);
+  const sorted = [...agents].sort((a,b) => b.gT - a.gT);
   const max = sorted[0]?.gT || 1;
   document.getElementById('volumeBars').innerHTML = sorted.map(a => `
     <div class="bar-row">
