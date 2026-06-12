@@ -282,7 +282,7 @@ tbody tr:hover td{background:var(--surface2)}
 
 <script>
 // ═══════ CONFIG ═══════════════════════════════════════════════════
-const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
+const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU7MjEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;   // Sub Requests
 const BOARD_SS = 9812976093;   // Subs Sales
 const CACHE_KEY = 'sub_requests_dash_v8';
@@ -637,20 +637,46 @@ function renderMainTable() {
 }
 
 function renderOfferStatus() {
-  const sorted = [...agents].filter(a=>a.can>0).sort((a,b)=>b.can-a.can);
-  document.getElementById('offerBars').innerHTML = sorted.map(a => {
-    const tot = a.accepted+a.rejected+a.rescinded+a.mutualCancel || 1;
-    return `<div class="sbar-row">
-      <div class="sbar-name">${a.name.split(' ')[0]}</div>
-      <div class="sbar-wrap">
-        <div class="sbar-seg" style="width:${a.accepted/tot*100}%;background:var(--green)"></div>
-        <div class="sbar-seg" style="width:${a.rejected/tot*100}%;background:var(--red)"></div>
-        <div class="sbar-seg" style="width:${a.rescinded/tot*100}%;background:var(--blue)"></div>
-        <div class="sbar-seg" style="width:${a.mutualCancel/tot*100}%;background:var(--purple)"></div>
-      </div>
-      <div class="sbar-info">${a.accepted}A · ${a.rejected}R · ${a.rescinded}Rc · ${a.mutualCancel}MC</div>
-    </div>`;
-  }).join('');
+  const cols = ['accepted','rejected','rescinded','mutualCancel'];
+  const colLabels = {accepted:'Accepted',rejected:'Rejected',rescinded:'Rescinded',mutualCancel:'Mut. Cancel'};
+  const colColors = {accepted:'var(--green)',rejected:'var(--red)',rescinded:'var(--blue)',mutualCancel:'var(--purple)'};
+  const colBg = {accepted:'rgba(52,208,122,0.12)',rejected:'rgba(240,90,90,0.12)',rescinded:'rgba(78,145,255,0.12)',mutualCancel:'rgba(160,100,255,0.12)'};
+  const activeCols = cols.filter(c => agents.some(a => a[c] > 0));
+  const totals = activeCols.reduce((t,c)=>({...t,[c]:agents.reduce((s,a)=>s+(a[c]||0),0)}),{});
+  const cell = (val, col) => val > 0
+    ? `<td style="text-align:center;font-weight:700;color:${colColors[col]};background:${colBg[col]};padding:8px 20px;border-right:1px solid #1e2130">${val}</td>`
+    : `<td style="text-align:center;color:#333;padding:8px 20px;border-right:1px solid #1e2130">—</td>`;
+  const rows = [...agents]
+    .sort((a,b) => {
+      const aT = activeCols.reduce((s,c)=>s+(a[c]||0),0);
+      const bT = activeCols.reduce((s,c)=>s+(b[c]||0),0);
+      return bT - aT || a.name.localeCompare(b.name);
+    })
+    .map(a => {
+      const total = activeCols.reduce((s,c)=>s+(a[c]||0),0);
+      return `<tr style="border-bottom:1px solid #1a1d25">
+        <td style="padding:8px 16px;color:${total>0?'var(--text1)':'#444'};border-right:1px solid #1e2130">${a.name}</td>
+        ${activeCols.map(c=>cell(a[c]||0,c)).join('')}
+        <td style="text-align:center;font-weight:${total>0?700:400};color:${total>0?'var(--text2)':'#333'};padding:8px 16px">${total>0?total:'—'}</td>
+      </tr>`;
+    }).join('');
+  const html = `
+    <div style="padding:4px 0 8px;color:var(--text3);font-size:11px;letter-spacing:.08em;margin-bottom:12px">OFFER OUTCOME SUMMARY</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #1e2130;border-radius:8px;overflow:hidden">
+      <thead><tr style="background:#13161e;border-bottom:2px solid #2a2d35">
+        <th style="text-align:left;padding:9px 16px;color:var(--text3);font-weight:500;font-size:11px;letter-spacing:.06em;border-right:1px solid #1e2130">AGENT</th>
+        ${activeCols.map(c=>`<th style="text-align:center;padding:9px 20px;color:${colColors[c]};font-size:11px;letter-spacing:.06em;border-right:1px solid #1e2130">${colLabels[c].toUpperCase()}</th>`).join('')}
+        <th style="text-align:center;padding:9px 16px;color:var(--text3);font-size:11px;letter-spacing:.06em">TOTAL</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr style="background:#13161e;border-top:2px solid #2a2d35">
+        <td style="padding:9px 16px;color:var(--text1);font-weight:700;border-right:1px solid #1e2130">Team</td>
+        ${activeCols.map(c=>cell(totals[c],c)).join('')}
+        <td style="text-align:center;font-weight:700;color:var(--text1);padding:9px 16px">${activeCols.reduce((s,c)=>s+totals[c],0)}</td>
+      </tr></tfoot>
+    </table>`;
+  const wrap = document.getElementById('offerBars').closest('.card') || document.getElementById('offerBars').parentElement;
+  wrap.innerHTML = html;
 }
 
 function renderSpendRatio() {
@@ -670,7 +696,7 @@ function renderLifecycle() {
   document.getElementById('lifecycleRows').innerHTML = sorted.map(a => `
     <div class="lc-row">
       <div class="lc-name">${a.name.split(' ')[0]}</div>
-      <div class="lc-step" style="color:var(--amber)">${a.lcNew}<small>New</small></div>
+      <div class="lc-step" style="color:var(--amber)'>${a.lcNew}<small>New</small></div>
       <div class="lc-arrow">→</div>
       <div class="lc-step" style="color:var(--blue)">${a.lcAwaiting}<small>Awaiting</small></div>
       <div class="lc-arrow">→</div>
@@ -803,4 +829,4 @@ function clearCache() {
 })();
 </script>
 </body>
-</html
+</html>
