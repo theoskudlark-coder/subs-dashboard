@@ -20,7 +20,7 @@ SR_GROUPS = ['new_group43773', 'new_group87137', 'new_group45268', 'new_group613
 SS_GROUPS = ['group_title', 'group_mktsz4af', 'group_mkv54q2j']
 
 SR_COLS = ['person', 'status81', 'numbers', 'numbers0', 'date4']
-SS_COLS = ['status', 'numeric_mkts722d', 'numeric_mktsk8h', 'date4']
+SS_COLS = ['status', 'numeric_mkts722d', 'numeric_mktsck8h', 'date4']
 
 
 def gql(query):
