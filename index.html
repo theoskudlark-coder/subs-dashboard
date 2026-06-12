@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sub Requests Â· Loss Mitigation Dashboard v7</title>
+<title>Sub Requests · Loss Mitigation Dashboard v7</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0d0f14;--surface:#13161e;--surface2:#1a1e28;--border:#252836;--text1:#e8eaf0;--text2:#9399a8;--text3:#5c6272;--blue:#4f8ef7;--green:#34d07a;--amber:#f0a93a;--red:#f05a5a;--purple:#a78bfa;--teal:#2dd4bf}
@@ -36,12 +36,12 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
 .kcard .kval{font-size:22px;font-weight:700;line-height:1}
 .kcard .ksub{font-size:11px;color:var(--text3);margin-top:4px}
 .tpanel{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
-.thead2{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.thead2{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align.items:center;justify-content:space-between;gap:8px}
 .ptitle{font-size:13px;font-weight:600;color:var(--text1)}
 .psub{font-size:11px;color:var(--text3)}
 .crow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
 table{width:100%;border-collapse:collapse}
-th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);font-weight:500;cursor:pointer;white-space:nowraw;user-select:none}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);font-weight:500;cursor:pointer;white-space:nowrap;user-select:none}
 th:first-child,th.l{text-align:left}
 th:hover{color:var(--text1)}
 td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;font-size:12px}
@@ -91,7 +91,7 @@ tbody tr:hover td{background:var(--surface2)}
 <body>
 
 <div class="header">
-  <h1>Sub Requests Â· Loss Mitigation Dashboard</h1>
+  <h1>Sub Requests · Lost Mitigation Dashboard</h1>
   <span class="hbadge">v7</span>
   <div class="date-group">
     <label>From</label>
@@ -107,7 +107,7 @@ tbody tr:hover td{background:var(--surface2)}
 <div class="main">
   <div id="errBar"></div>
   <div id="loadingPanel">
-    <div style="font-size:13px;font-weight:500" id="loadMsg">Loadingâ¦</div>
+    <div style="font-size:13px;font-weight:500" id="loadMsg">Loading…</div>
     <div class="progress-wrap"><div class="progress-bar" id="pBar"></div></div>
     <div style="font-size:11px;color:var(--text3)" id="loadSub"></div>
   </div>
@@ -115,32 +115,32 @@ tbody tr:hover td{background:var(--surface2)}
 
   <div id="content" style="display:none">
 
-    <!-- ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
-    <!-- ââ Dept Performance (subs-dept-performance) ââ -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- ── Dept Performance (subs-dept-performance) ── -->
     <div class="section-header">
-      <span class="section-header-text" style="color:var(--green)">Dept Performance Â· Order Volume &amp; Success Rate</span>
+      <span class="section-header-text" style="color:var(--green)">Dept Performance · Order Volume &amp; Success Rate</span>
       <div class="section-divider"></div>
     </div>
     <div class="kgrid" id="deptKpis"></div>
 
-    <!-- ââ Loss Mitigation (loss-mitigation-report) ââ -->
+    <!-- ── Loss Mitigation (loss-mitigation-report) ── -->
     <div class="section-header" style="margin-top:20px">
-      <span class="section-header-text" style="color:var(--purple)">Loss Mitigation Â· Completed Group KPIs</span>
+      <span class="section-header-text" style="color:var(--purple)">Loss Mitigation · Completed Group KPIs</span>
       <div class="section-divider"></div>
     </div>
     <div class="kgrid" id="lossMitKpis"></div>
 
-    <!-- ââ Sub Requests: KPI Overview ââ -->
+    <!-- ── Sub Requests: KPI Overview ── -->
     <div class="section-header">
-      <span class="section-header-text">Sub Requests Â· Performance Overview</span>
+      <span class="section-header-text">Sub Requests · Performance Overview</span>
       <div class="section-divider"></div>
     </div>
     <div class="kgrid" id="kpiTiles"></div>
 
-    <!-- ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
-    <!-- ââ Subs Sales ROI ââ -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- ── Subs Sales ROI ── -->
     <div class="section-header" style="margin-top:24px">
-      <span class="section-header-text" style="color:var(--blue)">Subs Sales Â· ROI &amp; Financial Performance</span>
+      <span class="section-header-text" style="color:var(--blue)">Subs Sales · ROI &amp; Financial Performance</span>
       <div class="section-divider"></div>
       <span style="font-size:10px;color:var(--text3);white-space:nowrap">Board 9812976093</span>
     </div>
@@ -167,9 +167,9 @@ tbody tr:hover td{background:var(--surface2)}
         </div>
       </div>
 
-      <!-- ââ Loss Analysis ââ -->
+      <!-- ── Loss Analysis ── -->
       <div class="tpanel">
-        <div class="thead2"><div class="ptitle">Loss analysis Â· Spoiled &amp; Canceled</div><div class="psub">Unrecovered spend</div></div>
+        <div class="thead2"><div class="ptitle">Loss analysis · Spoiled &amp; Canceled</div><div class="psub">Unrecovered spend</div></div>
         <div style="overflow-x:auto">
           <table>
             <thead><tr>
@@ -187,14 +187,14 @@ tbody tr:hover td{background:var(--surface2)}
     </div>
     </div>
 
-    <!-- ââ Volume + Donut ââ -->
+    <!-- ── Volume + Donut ── -->
     <div class="section-header">
       <span class="section-header-text">Order Volume by Agent</span>
       <div class="section-divider"></div>
     </div>
     <div class="crow">
       <div class="tpanel">
-        <div class="thead2"><div class="ptitle">Volume Â· all agents</div><div class="psub">Grand total per agent</div></div>
+        <div class="thead2"><div class="ptitle">Volume · all agents</div><div class="psub">Grand total per agent</div></div>
         <div id="volumeBars"></div>
       </div>
       <div class="tpanel">
@@ -206,7 +206,7 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
-    <!-- ââ Agent Breakdown ââ -->
+    <!-- ── Agent Breakdown ── -->
     <div class="section-header">
       <span class="section-header-text">Agent Breakdown</span>
       <div class="section-divider"></div>
@@ -230,7 +230,7 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
-    <!-- ââ Offer Status ââ -->
+    <!-- ── Offer Status ── -->
     <div class="section-header">
       <span class="section-header-text">Offer Status by Agent</span>
       <div class="section-divider"></div>
@@ -246,7 +246,7 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
-    <!-- ââ Spend Ratio ââ -->
+    <!-- ── Spend Ratio ── -->
     <div class="section-header">
       <span class="section-header-text">Agent Spend Ratio</span>
       <div class="section-divider"></div>
@@ -266,13 +266,13 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
-    <!-- ââ Lifecycle ââ -->
+    <!-- ── Lifecycle ── -->
     <div class="section-header">
       <span class="section-header-text">Item Lifecycle by Agent</span>
       <div class="section-divider"></div>
     </div>
     <div class="tpanel">
-      <div class="thead2"><div class="ptitle">New â Awaiting Response â Completed</div><div class="psub">Active pipeline depth</div></div>
+      <div class="thead2"><div class="ptitle">New → Awaiting Response → Completed</div><div class="psub">Active pipeline depth</div></div>
       <div id="lifecycleRows"></div>
     </div>
 
@@ -281,19 +281,69 @@ tbody tr:hover td{background:var(--surface2)}
 </div>
 
 <script>
-// âââââââ CONFIG âââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ═══════ CONFIG ═══════════════════════════════════════════════════
+const BOARD_SR = 4969640884;   // Sub Requests
+const BOARD_SS = 9812976093;   // Subs Sales
 const CACHE_KEY = 'sub_requests_dash_v8';
 const CACHE_TTL = 30 * 60 * 1000;
 
-// âââââââ DATA LOADER (reads from data.json, no direct API calls) ââââââ
-let _jsonCache = null;
-let _jsonCacheTs = 0;
+const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
 
+// Sub Requests — main performance groups
+const SR_GRPS = [
+  {gid:'new_group43773', key:'s1', label:'Completed'},
+  {gid:'new_group87137', key:'s2', label:'Pend.Adj'},
+  {gid:'new_group45268', key:'s3', label:'Awaiting Transfer'},
+  {gid:'new_group613',   key:'can', label:'Cancelled'},
+];
+// Sub Requests — lifecycle groups (counts only)
+const LC_GRPS = [
+  {gid:'topics',        key:'lcNew',      label:'New Requests'},
+  {gid:'group_title',   key:'lcAwaiting', label:'Awaiting Response'},
+];
+// Subs Sales — ROI groups
+const SS_GRPS = [
+  {gid:'group_title',    label:'Sold'},
+  {gid:'group_mktsz4af', label:'Spoiled'},
+  {gid:'group_mkv54q2j', label:'Canceled'},
+];
+
+const TOTAL_STEPS = SR_GRPS.length + LC_GRPS.length + SS_GRPS.length;
+let _steps = 0;
+
+let agents   = [];
+let ssData   = null;
+let deptData = null;
+
+// ═══════ HELPERS ══════════════════════════════════════════════════
+const fmt$  = v => '$' + Math.abs(Math.round(v)).toLocaleString('en-US');
+const fmtD$ = v => '$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtR  = v => v.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1});
+const pct   = v => fmtR(v) + '%';
+const sign$ = v => (v >= 0 ? '+' : '-') + fmt$(v);
+const signP = v => (v >= 0 ? '+' : '') + fmtR(v) + '%';
+const rc    = r => r >= 80 ? 'bg' : r >= 60 ? 'ba' : 'br';
+const rcol  = r => r >= 80 ? 'var(--green)' : r >= 60 ? 'var(--amber)' : 'var(--red)';
+const rClass= v => v > 0 ? 'roi-pos' : 'roi-neg';
+
+function showErr(m){const b=document.getElementById('errBar');b.textContent=m;b.style.display='block';}
+function hideErr(){document.getElementById('errBar').style.display='none';}
+function tick(msg, sub=''){
+  _steps++;
+  const pct = Math.round(_steps / TOTAL_STEPS * 100);
+  document.getElementById('pBar').style.width = pct + '%';
+  document.getElementById('loadMsg').textContent = msg;
+  document.getElementById('loadSub').textContent = sub;
+}
+
+// ═══════ API ══════════════════════════════════════════════════════
+// ═══════ DATA LOADER (reads from data.json — direct API calls) ═══
+let _jsonCache = null, _jsonCacheTs = 0;
 async function _getJsonData() {
   const now = Date.now();
   if (_jsonCache && now - _jsonCacheTs < CACHE_TTL) return _jsonCache;
   const r = await fetch('./data.json?v=' + Math.floor(now / CACHE_TTL));
-  if (!r.ok) throw new Error('data.json not available (' + r.status + ')');
+  if (!r.ok) throw new Error('Failed to load data.json: ' + r.status);
   _jsonCache = await r.json();
   _jsonCacheTs = now;
   return _jsonCache;
@@ -302,16 +352,19 @@ async function _getJsonData() {
 async function fetchItems(boardId, gid, start, end, colIds) {
   const data = await _getJsonData();
   const store = boardId === BOARD_SR ? data.board_sr : data.board_ss;
-  const items = (store && store[gid]) ? store[gid] : [];
-  return items.filter(item => {
-    const cv = item.column_values.find(c => c.id === 'date4');
-    if (!cv || !cv.value) return false;
-    try { const d = JSON.parse(cv.value).date; return d >= start && d <= end; }
-    catch(e) { return false; }
+  const allItems = store[gid] || [];
+  // Filter by date range using date4 column
+  const startMs = new Date(start).getTime();
+  const endMs   = new Date(end).getTime() + 86400000; // inclusive
+  return allItems.filter(item => {
+    const d4 = item.column_values?.find(c => c.id === 'date4');
+    if (!d4?.text) return false;
+    const t = new Date(d4.text).getTime();
+    return t >= startMs && t <= endMs;
   });
 }
 
-// âââââââ PARSERS ââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ═══════ PARSERS ══════════════════════════════════════════════════
 function cvMap(item) {
   const m = {};
   for (const c of item.column_values) m[c.id] = c;
@@ -331,10 +384,7 @@ function parseNum(cv) {
   return parseFloat(clean) || 0;
 }
 
-function showErr(m){const b=document.getElementById('errBar');b.textContent=m;b.style.display='block';}
-function hideErr(){document.getElementById('errBar').style.display='none';}
-
-// âââââââ AGENT MAP ââââââââââââââââââââââââââââââââââââââââââââââââ
+// ═══════ AGENT MAP ════════════════════════════════════════════════
 function ensureAgent(map, name) {
   if (!map[name]) map[name] = {
     name, s1:0, s2:0, s3:0, can:0, sT:0, gT:0, rate:0,
@@ -344,21 +394,21 @@ function ensureAgent(map, name) {
   return map[name];
 }
 
-// âââââââ LOCALSTORAGE SAFE WRAPPERS (needed in sandboxed iframes) âââ
+// ═══════ LOCALSTORAGE SAFE WRAPPERS (needed in sandboxed iframes) ═══
 function _lsGet(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
 function _lsSet(k,v){ try{localStorage.setItem(k,v);}catch(e){} }
 function _lsKeys(){ try{return Object.keys(localStorage);}catch(e){return [];} }
 
-// âââââââ LOAD ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ═══════ LOAD ══════════════════════════════════════════════════════
 async function loadData(start, end) {
-  const cacheK = `${CACHE_KEY}:${start}:${end}`;
+  const caccacheK = `${CACHE_KEY}:${start}:${end}`;
   const cached = _lsGet(cacheK);
   if (cached) {
     try {
       const {ts, a, s, d} = JSON.parse(cached);
       if (Date.now() - ts < CACHE_TTL) {
         agents = a; ssData = s; deptData = d;
-        document.getElementById('cacheTag').textContent = 'from cache Â·';
+        document.getElementById('cacheTag').textContent = 'from cache ·';
         return;
       }
     } catch(e) {}
@@ -370,12 +420,12 @@ async function loadData(start, end) {
 
   const agentMap = {};
 
-  // â Dept-level counters (all items, no agent filter) ââââââ
+  // ─ Dept-level counters (all items, no agent filter) ──────
   deptData = {s1:0, s2:0, s3:0, can:0, rescinded:0, totalSale:0, newTicketAmt:0, costCeiling:0};
 
-  // â Sub Requests main groups âââââââââââââââââââââââââââââââ
+  // ─ Sub Requests main groups ───────────────────────────────
   for (const grp of SR_GRPS) {
-    tick(`Loading ${grp.label}â¦`);
+    tick(`Loading ${grp.label}…`);
     const items = await fetchItems(BOARD_SR, grp.gid, start, end, ['person','status81','numbers','numbers0']);
     for (const item of items) {
       const cv    = cvMap(item);
@@ -383,9 +433,9 @@ async function loadData(start, end) {
       const sIdx  = parseStatusIdx(cv['status81']);
       const ts    = parseNum(cv['numbers']);
       const nt    = parseNum(cv['numbers0']);
-      const cf    = ts * 4;  // Cost Ceiling = Total Sale Ã 400% (MULTIPLY({numbers},400%))
+      const cf    = ts * 4;  // Cost Ceiling = Total Sale × 400% (MULTIPLY({numbers},400%))
 
-      // Dept totals â every item regardless of assignment
+      // Dept totals — every item regardless of assignment
       deptData[grp.key]++;
       if (grp.key === 's1') {
         deptData.totalSale    += ts;
@@ -410,9 +460,9 @@ async function loadData(start, end) {
     }
   }
 
-  // â Sub Requests lifecycle groups âââââââââââââââââââââââââ
+  // ─ Sub Requests lifecycle groups ─────────────────────────
   for (const grp of LC_GRPS) {
-    tick(`Loading lifecycle: ${grp.label}â¦`);
+    tick(`Loading lifecycle: ${grp.label}…`);
     const items = await fetchItems(BOARD_SR, grp.gid, start, end, ['person']);
     for (const item of items) {
       const cv = cvMap(item);
@@ -425,7 +475,7 @@ async function loadData(start, end) {
     }
   }
 
-  // â Finalize agent records âââââââââââââââââââââââââââââââââ
+  // ─ Finalize agent records ─────────────────────────────────
   agents = Object.values(agentMap);
   for (const a of agents) {
     a.sT   = a.s1 + a.s2 + a.s3;
@@ -434,7 +484,7 @@ async function loadData(start, end) {
   }
   agents = agents.filter(a => a.gT > 0 || a.lcNew > 0 || a.lcAwaiting > 0);
 
-  // â Subs Sales groups ââââââââââââââââââââââââââââââââââââââ
+  // ─ Subs Sales groups ──────────────────────────────────────
   ssData = {
     sold:    {count:0, cost:0, sold:0, profCount:0, lossCount:0},
     partSold:{count:0, cost:0, sold:0},
@@ -444,7 +494,7 @@ async function loadData(start, end) {
   };
 
   for (const grp of SS_GRPS) {
-    tick(`Loading Subs Sales: ${grp.label}â¦`);
+    tick(`Loading Subs Sales: ${grp.label}…`);
     const items = await fetchItems(BOARD_SS, grp.gid, start, end, ['status','numeric_mkts722d','numeric_mktsck8h']);
     for (const item of items) {
       const cv     = cvMap(item);
@@ -463,14 +513,14 @@ async function loadData(start, end) {
   _lsSet(cacheK, JSON.stringify({ts:Date.now(), a:agents, s:ssData, d:deptData}));
 }
 
-// âââââââ RENDER: Dept Performance ââââââââââââââââââââââââââââââââ
+// ═══════ RENDER: Dept Performance ════════════════════════════════
 function renderDeptKPIs() {
   if (!deptData) return;
   const successTotal = deptData.s1 + deptData.s2 + deptData.s3;
   const grandTotal   = successTotal + deptData.can;
   const successRate  = grandTotal > 0 ? successTotal / grandTotal * 100 : 0;
   const cancelRate   = grandTotal > 0 ? deptData.can / grandTotal * 100 : 0;
-  const successColor = successRate >= 80 ? 'var(--green)' : successRate >= 60 ? 'var(--amber)' : 'var(--red)';
+  const successColor = successRate >= 80 ? 'var(--green)" : successRate >= 60 ? 'var(--amber)' : 'var(--red)';
   document.getElementById('deptKpis').innerHTML = `
     <div class="kcard" style="border-color:var(--green)33">
       <div class="klabel">Success Rate</div>
@@ -488,7 +538,7 @@ function renderDeptKPIs() {
     <div class="kcard"><div class="klabel">Rescinded</div><div class="kval" style="color:var(--purple)">${deptData.rescinded.toLocaleString()}</div><div class="ksub">Within cancelled</div></div>`;
 }
 
-// âââââââ RENDER: Loss Mitigation âââââââââââââââââââââââââââââââââ
+// ═══════ RENDER: Loss Mitigation ════════════════════════════════
 function renderLossMitKPIs() {
   if (!deptData) return;
   const totalSale    = deptData.totalSale;
@@ -505,14 +555,14 @@ function renderLossMitKPIs() {
       <div class="kval" style="color:${mitigColor};font-size:28px">${pct(mitigatedPct)}</div>
       <div class="ksub">of Cost Ceiling avoided</div>
     </div>
-    <div class="kcard"><div class="klabel">Mitigated Amount</div><div class="kval" style="color:var(--green)">${fmt$(mitigatedAmt)}</div><div class="ksub">ceiling â new ticket</div></div>
+    <div class="kcard"><div class="klabel">Mitigated Amount</div><div class="kval" style="color:var(--green)">${fmt$(mitigatedAmt)}</div><div class="ksub">ceiling − new ticket</div></div>
     <div class="kcard"><div class="klabel">Cost Ceiling</div><div class="kval">${fmt$(ceiling)}</div><div class="ksub">Max possible exposure</div></div>
     <div class="kcard"><div class="klabel">Total Sale Value</div><div class="kval">${fmt$(totalSale)}</div><div class="ksub">Original order value</div></div>
-    <div class="kcard"><div class="klabel">New Ticket Amount</div><div class="kval">${fmt$(newTicket)}</div><div class="ksub">Actual spend Â· ${pct(actualSpend)} of ceiling</div></div>
+    <div class="kcard"><div class="klabel">New Ticket Amount</div><div class="kval">${fmt$(newTicket)}</div><div class="ksub">Actual spend · ${pct(actualSpend)} of ceiling</div></div>
     <div class="kcard"><div class="klabel">Ticket / Sale Ratio</div><div class="kval ${ratio <= 1 ? 'roi-pos' : 'roi-neg'}">${fmtR(ratio)}x</div><div class="ksub">${ratio <= 1 ? 'Spent less than sale' : 'Spent more than sale'}</div></div>`;
 }
 
-// âââââââ RENDER: Sub Requests âââââââââââââââââââââââââââââââââââââ
+// ═══════ RENDER: Sub Requests ═════════════════════════════════════
 function renderKPIs() {
   const tot = agents.reduce((acc, a) => ({
     sT: acc.sT+a.sT, can: acc.can+a.can, gT: acc.gT+a.gT,
@@ -530,7 +580,7 @@ function renderKPIs() {
 }
 
 function renderBars() {
-  const sorted = [...agents].sort((a,b) => b.gT - a.gT);
+  const sorted = [...agents].sort((a,b) => b.gT - .gTa.gT);
   const max = sorted[0]?.gT || 1;
   document.getElementById('volumeBars').innerHTML = sorted.map(a => `
     <div class="bar-row">
@@ -584,46 +634,20 @@ function renderMainTable() {
 }
 
 function renderOfferStatus() {
-  const cols = ['accepted','rejected','rescinded','mutualCancel'];
-  const colLabels = {accepted:'Accepted',rejected:'Rejected',rescinded:'Rescinded',mutualCancel:'Mut. Cancel'};
-  const colColors = {accepted:'var(--green)',rejected:'var(--red)',rescinded:'var(--blue)',mutualCancel:'var(--purple)'};
-  const colBg = {accepted:'rgba(52,208,122,0.12)',rejected:'rgba(240,90,90,0.12)',rescinded:'rgba(78,145,255,0.12)',mutualCancel:'rgba(160,100,255,0.12)'};
-  const activeCols = cols.filter(c => agents.some(a => a[c] > 0));
-  const totals = activeCols.reduce((t,c)=>({...t,[c]:agents.reduce((s,a)=>s+(a[c]||0),0)}),{});
-  const cell = (val, col) => val > 0
-    ? `<td style="text-align:center;font-weight:700;color:${colColors[col]};background:${colBg[col]};padding:8px 20px;border-right:1px solid #1e2130">${val}</td>`
-    : `<td style="text-align:center;color:#333;padding:8px 20px;border-right:1px solid #1e2130">â</td>`;
-  const rows = [...agents]
-    .sort((a,b) => {
-      const aT = activeCols.reduce((s,c)=>s+(a[c]||0),0);
-      const bT = activeCols.reduce((s,c)=>s+(b[c]||0),0);
-      return bT - aT || a.name.localeCompare(b.name);
-    })
-    .map(a => {
-      const total = activeCols.reduce((s,c)=>s+(a[c]||0),0);
-      return `<tr style="border-bottom:1px solid #1a1d25">
-        <td style="padding:8px 16px;color:${total>0?'var(--text1)':'#444'};border-right:1px solid #1e2130">${a.name}</td>
-        ${activeCols.map(c=>cell(a[c]||0,c)).join('')}
-        <td style="text-align:center;font-weight:${total>0?700:400};color:${total>0?'var(--text2)':'#333'};padding:8px 16px">${total>0?total:'â'}</td>
-      </tr>`;
-    }).join('');
-  const html = `
-    <div style="padding:4px 0 8px;color:var(--text3);font-size:11px;letter-spacing:.08em;margin-bottom:12px">OFFER OUTCOME SUMMARY</div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #1e2130;border-radius:8px;overflow:hidden">
-      <thead><tr style="background:#13161e;border-bottom:2px solid #2a2d35">
-        <th style="text-align:left;padding:9px 16px;color:var(--text3);font-weight:500;font-size:11px;letter-spacing:.06em;border-right:1px solid #1e2130">AGENT</th>
-        ${activeCols.map(c=>`<th style="text-align:center;padding:9px 20px;color:${colColors[c]};font-size:11px;letter-spacing:.06em;border-right:1px solid #1e2130">${colLabels[c].toUpperCase()}</th>`).join('')}
-        <th style="text-align:center;padding:9px 16px;color:var(--text3);font-size:11px;letter-spacing:.06em">TOTAL</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-      <tfoot><tr style="background:#13161e;border-top:2px solid #2a2d35">
-        <td style="padding:9px 16px;color:var(--text1);font-weight:700;border-right:1px solid #1e2130">Team</td>
-        ${activeCols.map(c=>cell(totals[c],c)).join('')}
-        <td style="text-align:center;font-weight:700;color:var(--text1);padding:9px 16px">${activeCols.reduce((s,c)=>s+totals[c],0)}</td>
-      </tr></tfoot>
-    </table>`;
-  const wrap = document.getElementById('offerBars').closest('.card') || document.getElementById('offerBars').parentElement;
-  wrap.innerHTML = html;
+  const sorted = [...agents].filter(a=>a.can>0).sort((a,b)=>b.can-a.can);
+  document.getElementById('offerBars').innerHTML = sorted.map(a => {
+    const tot = a.accepted+a.rejected+a.rescinded+a.mutualCancel || 1;
+    return `<div class="sbar-row">
+      <div class="sbar-name">${a.name.split(' ')[0]}</div>
+      <div class="sbar-wrap">
+        <div class="sbar-seg" style="width:${a.accepted/tot*100}%;background:var(--green)"></div>
+        <div class="sbar-seg" style="width:${a.rejected/tot*100}%;background:var(--red)"></div>
+        <div class="sbar-seg" style="width:${a.rescinded/tot*100}%;background:var(--blue)"></div>
+        <div class="sbar-seg" style="width:${a.mutualCancel/tot*100}%;background:var(--purple)"></div>
+      </div>
+      <div class="sbar-info">${a.accepted}A · ${a.rejected}R · ${a.rescinded}Rc · ${a.mutualCancel}MC</div>
+    </div>`;
+  }).join('');
 }
 
 function renderSpendRatio() {
@@ -644,14 +668,14 @@ function renderLifecycle() {
     <div class="lc-row">
       <div class="lc-name">${a.name.split(' ')[0]}</div>
       <div class="lc-step" style="color:var(--amber)">${a.lcNew}<small>New</small></div>
-      <div class="lc-arrow">â</div>
+      <div class="lc-arrow">→</div>
       <div class="lc-step" style="color:var(--blue)">${a.lcAwaiting}<small>Awaiting</small></div>
-      <div class="lc-arrow">â</div>
+      <div class="lc-arrow">→</div>
       <div class="lc-step" style="color:var(--green)">${a.sT}<small>Complete</small></div>
     </div>`).join('');
 }
 
-// âââââââ RENDER: Subs Sales ROI âââââââââââââââââââââââââââââââââââ
+// ═══════ RENDER: Subs Sales ROI ═══════════════════════════════════
 function renderROIKPIs() {
   if (!ssData) return;
   const combCost = ssData.sold.cost + ssData.partSold.cost;
@@ -680,7 +704,7 @@ function renderROITable() {
     const roi = d.cost > 0 ? net/d.cost*100 : 0;
     const plCols = showPL
       ? `<td>${d.profCount}</td><td style="color:var(--red)">${d.lossCount}</td>`
-      : `<td>â</td><td>â</td>`;
+      : `<td>—</td><td>—</td>`;
     return `<tr><td class="l">${pill(label,color)}</td><td>${d.count}</td>${plCols}
       <td>${fmt$(d.cost)}</td><td>${fmt$(d.sold)}</td>
       <td class="${rClass(net)}">${sign$(net)}</td>
@@ -693,7 +717,7 @@ function renderROITable() {
     row('Sold','var(--green)',ssData.sold,true) +
     row('Partially Sold','var(--purple)',ssData.partSold,false) +
     (ssData.notSold.count>0 ? row('Not Sold','var(--text3)',ssData.notSold,false) : '') +
-    `<tr class="tr-total"><td class="l">Combined</td><td>${ssData.sold.count+ssData.partSold.count}</td><td>â</td><td>â</td>
+    `<tr class="tr-total"><td class="l">Combined</td><td>${ssData.sold.count+ssData.partSold.count}</td><td>—</td><td>—</td>
       <td>${fmt$(cC)}</td><td>${fmt$(cS)}</td>
       <td class="${rClass(cN)}">${sign$(cN)}</td>
       <td class="${rClass(cR)}">${signP(cR)}</td></tr>`;
@@ -741,7 +765,7 @@ function renderAll() {
   const d2 = document.getElementById('dtEnd').value;
   const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
   document.getElementById('statusbar').textContent =
-    `${d1} â ${d2}  Â·  ${agents.length} agents  Â·  last loaded ${ts}`;
+    `${d1} → ${d2}  ·  ${agents.length} agents  ·  last loaded ${ts}`;
 }
 
 async function reload() {
