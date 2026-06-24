@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sub Requests · Loss Mitigation Dashboard v7</title>
+<title>Sub Requests · Loss Mitigation Dashboard v8</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0d0f14;--surface:#13161e;--surface2:#1a1e28;--border:#252836;--text1:#e8eaf0;--text2:#9399a8;--text3:#5c6272;--blue:#4f8ef7;--green:#34d07a;--amber:#f0a93a;--red:#f05a5a;--purple:#a78bfa;--teal:#2dd4bf}
@@ -84,6 +84,15 @@ tbody tr:hover td{background:var(--surface2)}
 .lc-step small{display:block;font-size:10px;color:var(--text3);font-weight:400;margin-top:2px}
 .lc-arrow{color:var(--text3);font-size:14px;flex-shrink:0}
 .status-pill{display:inline-block;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:500}
+/* ── v8 additions ─────────────────────────────────────────── */
+.fin-placeholder{opacity:0.38}
+.net-recovery-banner{border-radius:10px;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:12px}
+.net-recovery-banner .nr-left{}
+.net-recovery-banner .nr-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.net-recovery-banner .nr-desc{font-size:11px;color:var(--text3);line-height:1.7}
+.net-recovery-banner .nr-desc strong{color:var(--text2)}
+.net-recovery-banner .nr-value{font-size:32px;font-weight:700;font-family:monospace;white-space:nowrap}
+/* ────────────────────────────────────────────────────────── */
 @media(max-width:900px){.crow{grid-template-columns:1fr}}
 @media(max-width:600px){.kgrid{grid-template-columns:repeat(2,1fr)}.header h1{min-width:unset}}
 </style>
@@ -92,7 +101,7 @@ tbody tr:hover td{background:var(--surface2)}
 
 <div class="header">
   <h1>Sub Requests · Loss Mitigation Dashboard</h1>
-  <span class="hbadge">v7</span>
+  <span class="hbadge">v8</span>
   <div class="date-group">
     <label>From</label>
     <input type="date" id="dtStart">
@@ -109,37 +118,132 @@ tbody tr:hover td{background:var(--surface2)}
   <div id="loadingPanel">
     <div style="font-size:13px;font-weight:500" id="loadMsg">Loading…</div>
     <div class="progress-wrap"><div class="progress-bar" id="pBar"></div></div>
-    <div style="font-size:11px;color:var(--text3)" id="loadSub"></div>
+    <div style="font-size:11px;color:var(--text3)" id="loadSub">Fetching all items and filtering by Event Date — first load may take a moment.</div>
   </div>
   <div class="statusbar" id="statusbar"></div>
 
   <div id="content" style="display:none">
 
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- ── Dept Performance (subs-dept-performance) ── -->
+    <!-- ══ Financial Overview (v8 new) ══════════════════════════ -->
+    <div class="section-header" style="margin-top:0">
+      <span class="section-header-text" style="color:var(--teal)">Financial Overview · by Event Date</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="kgrid" id="finKpis"></div>
+    <div id="finBanner"></div>
+
+    <!-- ══ Dept Performance ══════════════════════════════════════ -->
     <div class="section-header">
       <span class="section-header-text" style="color:var(--green)">Dept Performance · Order Volume &amp; Success Rate</span>
       <div class="section-divider"></div>
     </div>
     <div class="kgrid" id="deptKpis"></div>
 
-    <!-- ── Loss Mitigation (loss-mitigation-report) ── -->
+    <!-- ══ Loss Mitigation ═══════════════════════════════════════ -->
     <div class="section-header" style="margin-top:20px">
       <span class="section-header-text" style="color:var(--purple)">Loss Mitigation · Completed Group KPIs</span>
       <div class="section-divider"></div>
     </div>
     <div class="kgrid" id="lossMitKpis"></div>
 
-    <!-- ── Sub Requests: KPI Overview ── -->
+    <!-- ══ Sub Requests: KPI Overview ═══════════════════════════ -->
     <div class="section-header">
       <span class="section-header-text">Sub Requests · Performance Overview</span>
       <div class="section-divider"></div>
     </div>
     <div class="kgrid" id="kpiTiles"></div>
 
-    <!-- ════════════════════════════════════════════════════════ -->
-    <!-- ── Subs Sales ROI ── -->
-    <div class="section-header" style="margin-top:24px">
+    <!-- ══ Volume + Donut ════════════════════════════════════════ -->
+    <div class="section-header">
+      <span class="section-header-text">Order Volume by Agent</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="crow">
+      <div class="tpanel">
+        <div class="thead2"><div class="ptitle">Volume · all agents</div><div class="psub">Grand total per agent</div></div>
+        <div id="volumeBars"></div>
+      </div>
+      <div class="tpanel">
+        <div class="thead2"><div class="ptitle">Success vs Cancelled</div><div class="psub">Department-wide</div></div>
+        <div id="donutWrap">
+          <canvas id="donutCanvas" width="120" height="120"></canvas>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Agent Breakdown ═══════════════════════════════════════ -->
+    <div class="section-header">
+      <span class="section-header-text">Agent Breakdown</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="tpanel">
+      <div class="thead2"><div class="ptitle">Performance by agent</div><div class="psub">Click headers to sort</div></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th class="l" onclick="sortBy('name')">Agent</th>
+            <th onclick="sortBy('s1')">Completed</th>
+            <th onclick="sortBy('s2')">Pend.Adj</th>
+            <th onclick="sortBy('s3')">Awaiting</th>
+            <th onclick="sortBy('sT')">Success Total</th>
+            <th onclick="sortBy('can')">Cancelled</th>
+            <th onclick="sortBy('gT')">Grand Total</th>
+            <th onclick="sortBy('rate')">Rate</th>
+          </tr></thead>
+          <tbody id="mainTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ Offer Status ══════════════════════════════════════════ -->
+    <div class="section-header">
+      <span class="section-header-text">Offer Status by Agent</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="tpanel">
+      <div class="thead2"><div class="ptitle">Accepted / Rejected / Rescinded / Mutual Cancel</div></div>
+      <div id="offerBars"></div>
+      <div class="sbar-legend">
+        <div class="sleg"><div class="sleg-dot" style="background:var(--green)"></div>Accepted</div>
+        <div class="sleg"><div class="sleg-dot" style="background:var(--red)"></div>Rejected</div>
+        <div class="sleg"><div class="sleg-dot" style="background:var(--blue)"></div>Rescinded</div>
+        <div class="sleg"><div class="sleg-dot" style="background:var(--purple)"></div>Mutual Cancel</div>
+      </div>
+    </div>
+
+    <!-- ══ Spend Ratio ═══════════════════════════════════════════ -->
+    <div class="section-header">
+      <span class="section-header-text">Agent Spend Ratio</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="tpanel">
+      <div class="thead2"><div class="ptitle">Total Sale vs New Ticket Amount</div><div class="psub">Ratio &lt;1.0 = spent less than original sale</div></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th class="l">Agent</th>
+            <th>Total Sale</th>
+            <th>New Ticket Amt</th>
+            <th>Ratio</th>
+          </tr></thead>
+          <tbody id="spendTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ Lifecycle ═════════════════════════════════════════════ -->
+    <div class="section-header">
+      <span class="section-header-text">Item Lifecycle by Agent</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="tpanel">
+      <div class="thead2"><div class="ptitle">New → Awaiting Response → Completed</div><div class="psub">Active pipeline depth</div></div>
+      <div id="lifecycleRows"></div>
+    </div>
+
+    <!-- ══ Subs Sales ROI ════════════════════════════════════════ -->
+    <div class="section-header" style="margin-top:36px">
       <span class="section-header-text" style="color:var(--blue)">Subs Sales · ROI &amp; Financial Performance</span>
       <div class="section-divider"></div>
       <span style="font-size:10px;color:var(--text3);white-space:nowrap">Board 9812976093</span>
@@ -166,8 +270,6 @@ tbody tr:hover td{background:var(--surface2)}
           </table>
         </div>
       </div>
-
-      <!-- ── Loss Analysis ── -->
       <div class="tpanel">
         <div class="thead2"><div class="ptitle">Loss analysis · Spoiled &amp; Canceled</div><div class="psub">Unrecovered spend</div></div>
         <div style="overflow-x:auto">
@@ -187,103 +289,14 @@ tbody tr:hover td{background:var(--surface2)}
     </div>
     </div>
 
-    <!-- ── Volume + Donut ── -->
-    <div class="section-header">
-      <span class="section-header-text">Order Volume by Agent</span>
-      <div class="section-divider"></div>
-    </div>
-    <div class="crow">
-      <div class="tpanel">
-        <div class="thead2"><div class="ptitle">Volume · all agents</div><div class="psub">Grand total per agent</div></div>
-        <div id="volumeBars"></div>
-      </div>
-      <div class="tpanel">
-        <div class="thead2"><div class="ptitle">Success vs Cancelled</div><div class="psub">Department-wide</div></div>
-        <div id="donutWrap">
-          <canvas id="donutCanvas" width="120" height="120"></canvas>
-          <div class="donut-legend" id="donutLegend"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Agent Breakdown ── -->
-    <div class="section-header">
-      <span class="section-header-text">Agent Breakdown</span>
-      <div class="section-divider"></div>
-    </div>
-    <div class="tpanel">
-      <div class="thead2"><div class="ptitle">Performance by agent</div><div class="psub">Click headers to sort</div></div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead><tr>
-            <th class="l" onclick="sortBy('name')">Agent</th>
-            <th onclick="sortBy('s1')">Completed</th>
-            <th onclick="sortBy('s2')">Pend.Adj</th>
-            <th onclick="sortBy('s3')">Awaiting</th>
-            <th onclick="sortBy('sT')">Success Total</th>
-            <th onclick="sortBy('can')">Cancelled</th>
-            <th onclick="sortBy('gT')">Grand Total</th>
-            <th onclick="sortBy('rate')">Rate</th>
-          </tr></thead>
-          <tbody id="mainTbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ── Offer Status ── -->
-    <div class="section-header">
-      <span class="section-header-text">Offer Status by Agent</span>
-      <div class="section-divider"></div>
-    </div>
-    <div class="tpanel">
-      <div class="thead2"><div class="ptitle">Accepted / Rejected / Rescinded / Mutual Cancel</div></div>
-      <div id="offerBars"></div>
-      <div class="sbar-legend">
-        <div class="sleg"><div class="sleg-dot" style="background:var(--green)"></div>Accepted</div>
-        <div class="sleg"><div class="sleg-dot" style="background:var(--red)"></div>Rejected</div>
-        <div class="sleg"><div class="sleg-dot" style="background:var(--blue)"></div>Rescinded</div>
-        <div class="sleg"><div class="sleg-dot" style="background:var(--purple)"></div>Mutual Cancel</div>
-      </div>
-    </div>
-
-    <!-- ── Spend Ratio ── -->
-    <div class="section-header">
-      <span class="section-header-text">Agent Spend Ratio</span>
-      <div class="section-divider"></div>
-    </div>
-    <div class="tpanel">
-      <div class="thead2"><div class="ptitle">Total Sale vs New Ticket Amount</div><div class="psub">Ratio &lt;1.0 = spent less than original sale</div></div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead><tr>
-            <th class="l">Agent</th>
-            <th>Total Sale</th>
-            <th>New Ticket Amt</th>
-            <th>Ratio</th>
-          </tr></thead>
-          <tbody id="spendTbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ── Lifecycle ── -->
-    <div class="section-header">
-      <span class="section-header-text">Item Lifecycle by Agent</span>
-      <div class="section-divider"></div>
-    </div>
-    <div class="tpanel">
-      <div class="thead2"><div class="ptitle">New → Awaiting Response → Completed</div><div class="psub">Active pipeline depth</div></div>
-      <div id="lifecycleRows"></div>
-    </div>
-
-
   </div><!-- /content -->
 </div>
 
 <script>
 // ═══════ CONFIG ═══════════════════════════════════════════════════
-const BOARD_SR = 4969640884;   // Sub Requests
-const BOARD_SS = 9812976093;   // Subs Sales
+const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
+const BOARD_SR = 4969640884;
+const BOARD_SS = 9812976093;
 const CACHE_KEY = 'sub_requests_dash_v8';
 const CACHE_TTL = 30 * 60 * 1000;
 
@@ -308,6 +321,14 @@ const SS_GRPS = [
   {gid:'group_mkv54q2j', label:'Canceled'},
 ];
 
+// Event Date column IDs
+const ED_SR = 'text_mkv9zrn9';   // Sub Requests — Event Date / Time
+const ED_SS = 'text_mkwqvqz3';   // Subs Sales   — Event Date / Time
+
+// Dept Fault: Seller Issue = index 1
+const COL_DEPT_FAULT = 'color_mkwzc1mh';
+const COL_ADJ_TOTAL  = 'formula__1';
+
 const TOTAL_STEPS = SR_GRPS.length + LC_GRPS.length + SS_GRPS.length;
 let _steps = 0;
 
@@ -328,40 +349,46 @@ const rClass= v => v > 0 ? 'roi-pos' : 'roi-neg';
 
 function showErr(m){const b=document.getElementById('errBar');b.textContent=m;b.style.display='block';}
 function hideErr(){document.getElementById('errBar').style.display='none';}
-function tick(msg, sub=''){
+function tick(msg){
   _steps++;
-  const pct = Math.round(_steps / TOTAL_STEPS * 100);
-  document.getElementById('pBar').style.width = pct + '%';
+  document.getElementById('pBar').style.width = Math.round(_steps / TOTAL_STEPS * 100) + '%';
   document.getElementById('loadMsg').textContent = msg;
-  document.getElementById('loadSub').textContent = sub;
 }
 
 // ═══════ API ══════════════════════════════════════════════════════
-// ═══════ DATA LOADER (reads from data.json — no direct API calls) ═══
-let _jsonCache = null, _jsonCacheTs = 0;
-async function _getJsonData() {
-  const now = Date.now();
-  if (_jsonCache && now - _jsonCacheTs < CACHE_TTL) return _jsonCache;
-  const r = await fetch('./data.json?v=' + Math.floor(now / CACHE_TTL));
-  if (!r.ok) throw new Error('Failed to load data.json: ' + r.status);
-  _jsonCache = await r.json();
-  _jsonCacheTs = now;
-  return _jsonCache;
+async function gql(query) {
+  const r = await fetch('https://api.monday.com/v2', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json', Authorization: TOKEN, 'API-Version':'2024-01'},
+    body: JSON.stringify({query})
+  });
+  const j = await r.json();
+  if (j.errors) throw new Error(j.errors[0].message);
+  return j.data;
 }
 
-async function fetchItems(boardId, gid, start, end, colIds) {
-  const data = await _getJsonData();
-  const store = boardId === BOARD_SR ? data.board_sr : data.board_ss;
-  const allItems = store[gid] || [];
-  // Filter by date range using date4 column
-  const startMs = new Date(start).getTime();
-  const endMs   = new Date(end).getTime() + 86400000; // inclusive
-  return allItems.filter(item => {
-    const d4 = item.column_values?.find(c => c.id === 'date4');
-    if (!d4?.text) return false;
-    const t = new Date(d4.text).getTime();
-    return t >= startMs && t <= endMs;
-  });
+// Fetches all items in a group, filters client-side by eventDateCol >= start && <= end
+async function fetchItems(boardId, gid, start, end, colIds, eventDateCol) {
+  const edc = eventDateCol || ED_SR;
+  const allCols = colIds.includes(edc) ? [...colIds] : [...colIds, edc];
+  const cols = allCols.map(c => `"${c}"`).join(',');
+  let items = [], cursor = null, first = true;
+  while (first || cursor) {
+    first = false;
+    const pageArgs = cursor
+      ? `limit:500,cursor:"${cursor}"`
+      : `limit:500,query_params:{rules:[{column_id:"group",compare_value:["${gid}"],operator:any_of}]}`;
+    const q = `{boards(ids:[${boardId}]){items_page(${pageArgs}){cursor items{name column_values(ids:[${cols}]){id value text}}}}}`;
+    const d = await gql(q);
+    const pg = d.boards[0].items_page;
+    for (const item of pg.items) {
+      const evCol = item.column_values.find(c => c.id === edc);
+      const evDate = (evCol?.text || '').slice(0, 10);
+      if (evDate && evDate >= start && evDate <= end) items.push(item);
+    }
+    cursor = pg.cursor || null;
+  }
+  return items;
 }
 
 // ═══════ PARSERS ══════════════════════════════════════════════════
@@ -394,12 +421,12 @@ function ensureAgent(map, name) {
   return map[name];
 }
 
-// ═══════ LOCALSTORAGE SAFE WRAPPERS (needed in sandboxed iframes) ═══
+// ═══════ LOCALSTORAGE WRAPPERS ════════════════════════════════════
 function _lsGet(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
 function _lsSet(k,v){ try{localStorage.setItem(k,v);}catch(e){} }
 function _lsKeys(){ try{return Object.keys(localStorage);}catch(e){return [];} }
 
-// ═══════ LOAD ══════════════════════════════════════════════════════
+// ═══════ LOAD ═════════════════════════════════════════════════════
 async function loadData(start, end) {
   const cacheK = `${CACHE_KEY}:${start}:${end}`;
   const cached = _lsGet(cacheK);
@@ -420,39 +447,46 @@ async function loadData(start, end) {
 
   const agentMap = {};
 
-  // ─ Dept-level counters (all items, no agent filter) ──────
-  deptData = {s1:0, s2:0, s3:0, can:0, rescinded:0, totalSale:0, newTicketAmt:0, costCeiling:0};
+  // deptData: all items regardless of agent assignment
+  deptData = {s1:0, s2:0, s3:0, can:0, rescinded:0, totalSale:0, newTicketAmt:0, costCeiling:0, recoupment:0};
 
-  // ─ Sub Requests main groups ───────────────────────────────
+  // ── Sub Requests main groups ──────────────────────────────────
+  const SR_COLS = ['person','status81','numbers','numbers0', COL_DEPT_FAULT, COL_ADJ_TOTAL];
+
   for (const grp of SR_GRPS) {
     tick(`Loading ${grp.label}…`);
-    const items = await fetchItems(BOARD_SR, grp.gid, start, end, ['person','status81','numbers','numbers0']);
+    const items = await fetchItems(BOARD_SR, grp.gid, start, end, SR_COLS, ED_SR);
     for (const item of items) {
       const cv    = cvMap(item);
       const names = parsePeopleText(cv['person']);
       const sIdx  = parseStatusIdx(cv['status81']);
       const ts    = parseNum(cv['numbers']);
       const nt    = parseNum(cv['numbers0']);
-      const cf    = ts * 4;  // Cost Ceiling = Total Sale × 400% (MULTIPLY({numbers},400%))
+      const cf    = ts * 4; // Cost Ceiling = Total Sale × 400%
 
-      // Dept totals — every item regardless of assignment
       deptData[grp.key]++;
       if (grp.key === 's1') {
         deptData.totalSale    += ts;
         deptData.newTicketAmt += nt;
         deptData.costCeiling  += cf;
+        // Seller Recoupment: Seller Fault (index 1) + positive adjustment
+        const deptFaultIdx = parseStatusIdx(cv[COL_DEPT_FAULT]);
+        const adjTotal     = parseNum(cv[COL_ADJ_TOTAL]);
+        if (deptFaultIdx === 1 && adjTotal > 0) {
+          deptData.recoupment += adjTotal;
+        }
       }
-      if (grp.key === 'can' && sIdx === 3) deptData.rescinded++;
+      if (grp.key === 'can' && sIdx === 5) deptData.rescinded++;
 
       for (const name of names) {
         if (EXCL.includes(name)) continue;
         const a = ensureAgent(agentMap, name);
         a[grp.key]++;
         if (grp.key === 'can') {
-          if (sIdx === 1) a.accepted++;
+          if      (sIdx === 1) a.accepted++;
           else if (sIdx === 2) a.rejected++;
-          else if (sIdx === 3) a.rescinded++;
-          else if (sIdx === 4) a.mutualCancel++;
+          else if (sIdx === 3) a.mutualCancel++;
+          else if (sIdx === 5) a.rescinded++;
         }
         a.totalSale    += ts;
         a.newTicketAmt += nt;
@@ -460,10 +494,10 @@ async function loadData(start, end) {
     }
   }
 
-  // ─ Sub Requests lifecycle groups ─────────────────────────
+  // ── Sub Requests lifecycle groups ────────────────────────────
   for (const grp of LC_GRPS) {
     tick(`Loading lifecycle: ${grp.label}…`);
-    const items = await fetchItems(BOARD_SR, grp.gid, start, end, ['person']);
+    const items = await fetchItems(BOARD_SR, grp.gid, start, end, ['person'], ED_SR);
     for (const item of items) {
       const cv = cvMap(item);
       const names = parsePeopleText(cv['person']);
@@ -475,7 +509,7 @@ async function loadData(start, end) {
     }
   }
 
-  // ─ Finalize agent records ─────────────────────────────────
+  // ── Finalize agent records ────────────────────────────────────
   agents = Object.values(agentMap);
   for (const a of agents) {
     a.sT   = a.s1 + a.s2 + a.s3;
@@ -484,7 +518,7 @@ async function loadData(start, end) {
   }
   agents = agents.filter(a => a.gT > 0 || a.lcNew > 0 || a.lcAwaiting > 0);
 
-  // ─ Subs Sales groups ──────────────────────────────────────
+  // ── Subs Sales groups ─────────────────────────────────────────
   ssData = {
     sold:    {count:0, cost:0, sold:0, profCount:0, lossCount:0},
     partSold:{count:0, cost:0, sold:0},
@@ -495,22 +529,74 @@ async function loadData(start, end) {
 
   for (const grp of SS_GRPS) {
     tick(`Loading Subs Sales: ${grp.label}…`);
-    const items = await fetchItems(BOARD_SS, grp.gid, start, end, ['status','numeric_mkts722d','numeric_mktsck8h']);
+    const items = await fetchItems(BOARD_SS, grp.gid, start, end,
+      ['status','numeric_mkts722d','numeric_mktsck8h'], ED_SS);
     for (const item of items) {
-      const cv     = cvMap(item);
-      const lbl    = cv['status']?.text?.trim() || '';
-      const cost   = parseNum(cv['numeric_mkts722d']);
-      const sold   = parseNum(cv['numeric_mktsck8h']);
-      if      (lbl === 'Sold')          { ssData.sold.count++;    ssData.sold.cost+=cost;    ssData.sold.sold+=sold;    if(sold>cost)ssData.sold.profCount++;else ssData.sold.lossCount++; }
-      else if (lbl === 'Partially Sold'){ ssData.partSold.count++;ssData.partSold.cost+=cost;ssData.partSold.sold+=sold; }
-      else if (lbl === 'Not Sold')      { ssData.notSold.count++; ssData.notSold.cost+=cost; ssData.notSold.sold+=sold; }
-      else if (grp.label === 'Spoiled') { ssData.spoiled.count++; ssData.spoiled.cost+=cost; ssData.spoiled.sold+=sold; }
-      else if (grp.label === 'Canceled'){ ssData.canceled.count++;ssData.canceled.cost+=cost;ssData.canceled.sold+=sold; }
+      const cv   = cvMap(item);
+      const lbl  = cv['status']?.text?.trim() || '';
+      const cost = parseNum(cv['numeric_mkts722d']);
+      const sold = parseNum(cv['numeric_mktsck8h']);
+      if      (lbl === 'Sold')           { ssData.sold.count++;    ssData.sold.cost+=cost;    ssData.sold.sold+=sold;    if(sold>cost)ssData.sold.profCount++;else ssData.sold.lossCount++; }
+      else if (lbl === 'Partially Sold') { ssData.partSold.count++;ssData.partSold.cost+=cost;ssData.partSold.sold+=sold; }
+      else if (lbl === 'Not Sold')       { ssData.notSold.count++; ssData.notSold.cost+=cost; ssData.notSold.sold+=sold; }
+      else if (grp.label === 'Spoiled')  { ssData.spoiled.count++; ssData.spoiled.cost+=cost; ssData.spoiled.sold+=sold; }
+      else if (grp.label === 'Canceled') { ssData.canceled.count++;ssData.canceled.cost+=cost;ssData.canceled.sold+=sold; }
     }
   }
 
   document.getElementById('loadingPanel').style.display = 'none';
   _lsSet(cacheK, JSON.stringify({ts:Date.now(), a:agents, s:ssData, d:deptData}));
+}
+
+// ═══════ RENDER: Financial Overview (v8) ══════════════════════════
+function renderFinancialOverview() {
+  // New Ticket Spend — all groups, all agents (matches Performance Overview)
+  const totalNewTicket = agents.reduce((s, a) => s + a.newTicketAmt, 0);
+  // Total Recovered — Subs Sales Sold + Partially Sold (items relisted and sold)
+  const totalRecovered = ssData ? ssData.sold.sold + ssData.partSold.sold : 0;
+  // Seller Recoupment — from deptData (Completed group, Seller Fault, adj > 0)
+  const recoupment = deptData?.recoupment || 0;
+  // Net Recovery = Total Recovered (relisted sales) + Seller Recoupment − New Ticket Spend
+  const netRecovery = totalRecovered + recoupment - totalNewTicket;
+  const isPos = netRecovery >= 0;
+  const netCol    = isPos ? 'var(--green)' : 'var(--red)';
+  const netBg     = isPos ? 'rgba(52,208,122,0.07)' : 'rgba(240,90,90,0.07)';
+  const netBorder = isPos ? 'rgba(52,208,122,0.22)' : 'rgba(240,90,90,0.22)';
+
+  document.getElementById('finKpis').innerHTML = `
+    <div class="kcard" style="border-color:rgba(240,169,58,0.35)">
+      <div class="klabel">New Ticket Spend</div>
+      <div class="kval" style="color:var(--amber)">${fmt$(totalNewTicket)}</div>
+      <div class="ksub">Cost to purchase subs · all groups</div>
+    </div>
+    <div class="kcard fin-placeholder">
+      <div class="klabel">Sale Total Collected</div>
+      <div class="kval" style="color:var(--text3)">—</div>
+      <div class="ksub">Paid orders · Datalake pending</div>
+    </div>
+    <div class="kcard" style="border-color:rgba(52,208,122,0.35)">
+      <div class="klabel">Seller Recoupment</div>
+      <div class="kval" style="color:${recoupment > 0 ? 'var(--green)' : 'var(--text3)'}">${recoupment > 0 ? fmt$(recoupment) : '—'}</div>
+      <div class="ksub">Seller Fault · Adjustment logged · Completed group</div>
+    </div>
+    <div class="kcard fin-placeholder">
+      <div class="klabel">Paid to Seller</div>
+      <div class="kval" style="color:var(--text3)">—</div>
+      <div class="ksub">Seller payment status · Datalake pending</div>
+    </div>`;
+
+  document.getElementById('finBanner').innerHTML = `
+    <div class="net-recovery-banner" style="background:${netBg};border:1px solid ${netBorder}">
+      <div class="nr-left">
+        <div class="nr-label" style="color:${netCol}">Net Recovery Position</div>
+        <div class="nr-desc">
+          Subs Sales · Total Recovered <strong>${fmt$(totalRecovered)}</strong>
+          &nbsp;+&nbsp; Seller Recoupment <strong>${fmt$(recoupment)}</strong>
+          &nbsp;−&nbsp; New Ticket Spend <strong>${fmt$(totalNewTicket)}</strong>
+        </div>
+      </div>
+      <div class="nr-value" style="color:${netCol}">${sign$(netRecovery)}</div>
+    </div>`;
 }
 
 // ═══════ RENDER: Dept Performance ════════════════════════════════
@@ -746,8 +832,9 @@ function renderLossTable() {
       <td class="roi-neg">${pct(cR)}</td></tr>`;
 }
 
-// ======= ORCHESTRATE =============================================
+// ═══════ ORCHESTRATE ══════════════════════════════════════════════
 function renderAll() {
+  renderFinancialOverview();   // v8 new — always first
   renderDeptKPIs();
   renderLossMitKPIs();
   renderKPIs();
@@ -765,7 +852,7 @@ function renderAll() {
   const d2 = document.getElementById('dtEnd').value;
   const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
   document.getElementById('statusbar').textContent =
-    `${d1} → ${d2}  ·  ${agents.length} agents  ·  last loaded ${ts}`;
+    `${d1} → ${d2}  ·  ${agents.length} agents  ·  last loaded ${ts}  ·  filtered by Event Date`;
 }
 
 async function reload() {
@@ -790,14 +877,15 @@ function clearCache() {
   setTimeout(() => document.getElementById('cacheTag').textContent = '', 2500);
 }
 
-// ======= INIT ====================================================
+// ═══════ INIT — default to current quarter ════════════════════════
 (function init() {
-  const now   = new Date();
-  const y = now.getFullYear(), m = now.getMonth();
-  document.getElementById('dtStart').value = new Date(y, m, 1).toISOString().split('T')[0];
-  document.getElementById('dtEnd').value   = new Date(y, m+1, 0).toISOString().split('T')[0];
-  reload();
+  const now = new Date();
+  const q   = Math.floor(now.getMonth() / 3);
+  const qs  = new Date(now.getFullYear(), q * 3, 1);
+  const qe  = new Date(now.getFullYear(), q * 3 + 3, 0);
+  document.getElementById('dtStart').value = qs.toISOString().split('T')[0];
+  document.getElementById('dtEnd').value   = qe.toISOString().split('T')[0];
 })();
 </script>
 </body>
-</html
+</html>
