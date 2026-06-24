@@ -367,6 +367,25 @@ async function gql(query) {
   return j.data;
 }
 
+// Fetches Subs Sales items using server-side between filter on Notification Date (date4)
+// date4 is a proper date column — unlike text_mkwqvqz3 which holds ticket event dates
+async function fetchItemsServerDate(boardId, gid, start, end, colIds) {
+  const cols = colIds.map(c => `"${c}"`).join(',');
+  let items = [], cursor = null, first = true;
+  while (first || cursor) {
+    first = false;
+    const pageArgs = cursor
+      ? `limit:500,cursor:"${cursor}"`
+      : `limit:500,query_params:{rules:[{column_id:"group",compare_value:["${gid}"],operator:any_of},{column_id:"date4",compare_value:["${start}","${end}"],operator:between}]}`;
+    const q = `{boards(ids:[${boardId}]){items_page(${pageArgs}){cursor items{name column_values(ids:[${cols}]){id value text}}}}}`;
+    const d = await gql(q);
+    const pg = d.boards[0].items_page;
+    items.push(...pg.items);
+    cursor = pg.cursor || null;
+  }
+  return items;
+}
+
 // Fetches all items in a group, filters client-side by eventDateCol >= start && <= end
 async function fetchItems(boardId, gid, start, end, colIds, eventDateCol) {
   const edc = eventDateCol || ED_SR;
@@ -529,8 +548,8 @@ async function loadData(start, end) {
 
   for (const grp of SS_GRPS) {
     tick(`Loading Subs Sales: ${grp.label}…`);
-    const items = await fetchItems(BOARD_SS, grp.gid, start, end,
-      ['status','numeric_mkts722d','numeric_mktsck8h'], ED_SS);
+    const items = await fetchItemsServerDate(BOARD_SS, grp.gid, start, end,
+      ['status','numeric_mkts722d','numeric_mktsck8h']);
     for (const item of items) {
       const cv   = cvMap(item);
       const lbl  = cv['status']?.text?.trim() || '';
@@ -865,27 +884,4 @@ async function reload() {
     await loadData(start, end);
     renderAll();
   } catch(e) {
-    document.getElementById('loadingPanel').style.display = 'none';
-    showErr('Error loading data: ' + e.message);
-    console.error(e);
-  }
-}
-
-function clearCache() {
-  _lsKeys().filter(k => k.startsWith(CACHE_KEY)).forEach(k => { try{localStorage.removeItem(k);}catch(e){} });
-  document.getElementById('cacheTag').textContent = 'cache cleared';
-  setTimeout(() => document.getElementById('cacheTag').textContent = '', 2500);
-}
-
-// ═══════ INIT — default to current quarter ════════════════════════
-(function init() {
-  const now = new Date();
-  const q   = Math.floor(now.getMonth() / 3);
-  const qs  = new Date(now.getFullYear(), q * 3, 1);
-  const qe  = new Date(now.getFullYear(), q * 3 + 3, 0);
-  document.getElementById('dtStart').value = qs.toISOString().split('T')[0];
-  document.getElementById('dtEnd').value   = qe.toISOString().split('T')[0];
-})();
-</script>
-</body>
-</html>
+    document.getElementB
