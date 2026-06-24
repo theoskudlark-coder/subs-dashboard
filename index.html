@@ -325,9 +325,9 @@ const SS_GRPS = [
 const ED_SR = 'text_mkv9zrn9';   // Sub Requests — Event Date / Time
 const ED_SS = 'text_mkwqvqz3';   // Subs Sales   — Event Date / Time
 
-// Dept Fault: Seller Issue = index 1
+// Dept Fault: Seller Issue = index 3 (use text matching for safety)
 const COL_DEPT_FAULT = 'color_mkwzc1mh';
-const COL_ADJ_TOTAL  = 'formula__1';
+// NOTE: formula__1 ("Adjustment Total") returns null via API — use numbers0 instead
 
 const TOTAL_STEPS = SR_GRPS.length + LC_GRPS.length + SS_GRPS.length;
 let _steps = 0;
@@ -451,7 +451,7 @@ async function loadData(start, end) {
   deptData = {s1:0, s2:0, s3:0, can:0, rescinded:0, totalSale:0, newTicketAmt:0, costCeiling:0, recoupment:0};
 
   // ── Sub Requests main groups ──────────────────────────────────
-  const SR_COLS = ['person','status81','numbers','numbers0', COL_DEPT_FAULT, COL_ADJ_TOTAL];
+  const SR_COLS = ['person','status81','numbers','numbers0', COL_DEPT_FAULT];
 
   for (const grp of SR_GRPS) {
     tick(`Loading ${grp.label}…`);
@@ -469,11 +469,11 @@ async function loadData(start, end) {
         deptData.totalSale    += ts;
         deptData.newTicketAmt += nt;
         deptData.costCeiling  += cf;
-        // Seller Recoupment: Seller Fault (index 1) + positive adjustment
-        const deptFaultIdx = parseStatusIdx(cv[COL_DEPT_FAULT]);
-        const adjTotal     = parseNum(cv[COL_ADJ_TOTAL]);
-        if (deptFaultIdx === 1 && adjTotal > 0) {
-          deptData.recoupment += adjTotal;
+        // Seller Recoupment: Seller Issue items — New Total Ticket Amount IS the recouped amount
+        // (formula__1 returns null via API; numbers0 is the underlying value the formula reads)
+        const isSellerIssue = cv[COL_DEPT_FAULT]?.text === 'Seller Issue';
+        if (isSellerIssue && nt > 0) {
+          deptData.recoupment += nt;
         }
       }
       if (grp.key === 'can' && sIdx === 5) deptData.rescinded++;
@@ -883,9 +883,4 @@ function clearCache() {
   const q   = Math.floor(now.getMonth() / 3);
   const qs  = new Date(now.getFullYear(), q * 3, 1);
   const qe  = new Date(now.getFullYear(), q * 3 + 3, 0);
-  document.getElementById('dtStart').value = qs.toISOString().split('T')[0];
-  document.getElementById('dtEnd').value   = qe.toISOString().split('T')[0];
-})();
-</script>
-</body>
-</html>
+  document.getElementById('dtStart').value = qs.toISOString().s
