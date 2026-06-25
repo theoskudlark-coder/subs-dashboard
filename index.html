@@ -586,36 +586,27 @@ function renderFinancialOverview() {
   const netBorder = isPos ? 'rgba(52,208,122,0.22)' : 'rgba(240,90,90,0.22)';
 
   document.getElementById('finKpis').innerHTML = `
-    <div class="kcard" style="border-color:rgba(240,169,58,0.35)">
-      <div class="klabel">New Ticket Spend</div>
-      <div class="kval" style="color:var(--amber)">${fmt$(totalNewTicket)}</div>
-      <div class="ksub">Cost to purchase subs · all groups</div>
-    </div>
-    <div class="kcard fin-placeholder">
-      <div class="klabel">Sale Total Collected</div>
-      <div class="kval" style="color:var(--text3)">—</div>
-      <div class="ksub">Paid orders · Datalake pending</div>
+    <div class="kcard" style="border-color:rgba(52,208,122,0.35)">
+      <div class="klabel">Total Recovered</div>
+      <div class="kval" style="color:var(--green)">+${fmt$(totalRecovered)}</div>
+      <div class="ksub">Subs Sales · sold &amp; partially sold</div>
     </div>
     <div class="kcard" style="border-color:rgba(52,208,122,0.35)">
       <div class="klabel">Seller Recoupment</div>
-      <div class="kval" style="color:${recoupment > 0 ? 'var(--green)' : 'var(--text3)'}">${recoupment > 0 ? fmt$(recoupment) : '—'}</div>
-      <div class="ksub">Seller Fault · Adjustment logged · Completed group</div>
+      <div class="kval" style="color:${recoupment > 0 ? 'var(--green)' : 'var(--text3)'}">${recoupment > 0 ? '+' + fmt$(recoupment) : '—'}</div>
+      <div class="ksub">Seller Issue · completed group</div>
     </div>
-    <div class="kcard fin-placeholder">
-      <div class="klabel">Paid to Seller</div>
-      <div class="kval" style="color:var(--text3)">—</div>
-      <div class="ksub">Seller payment status · Datalake pending</div>
+    <div class="kcard" style="border-color:rgba(240,169,58,0.35)">
+      <div class="klabel">New Ticket Spend</div>
+      <div class="kval" style="color:var(--amber)">−${fmt$(totalNewTicket)}</div>
+      <div class="ksub">Cost to purchase subs · all groups</div>
     </div>`;
 
   document.getElementById('finBanner').innerHTML = `
     <div class="net-recovery-banner" style="background:${netBg};border:1px solid ${netBorder}">
       <div class="nr-left">
         <div class="nr-label" style="color:${netCol}">Net Recovery Position</div>
-        <div class="nr-desc">
-          Subs Sales · Total Recovered <strong>${fmt$(totalRecovered)}</strong>
-          &nbsp;+&nbsp; Seller Recoupment <strong>${fmt$(recoupment)}</strong>
-          &nbsp;−&nbsp; New Ticket Spend <strong>${fmt$(totalNewTicket)}</strong>
-        </div>
+        <div class="nr-desc" style="color:var(--text3)">Recovered + Recoupment − Spend</div>
       </div>
       <div class="nr-value" style="color:${netCol}">${sign$(netRecovery)}</div>
     </div>`;
