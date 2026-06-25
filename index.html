@@ -86,12 +86,16 @@ tbody tr:hover td{background:var(--surface2)}
 .status-pill{display:inline-block;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:500}
 /* ── v8 additions ─────────────────────────────────────────── */
 .fin-placeholder{opacity:0.38}
-.net-recovery-banner{border-radius:10px;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:12px}
-.net-recovery-banner .nr-left{}
-.net-recovery-banner .nr-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-.net-recovery-banner .nr-desc{font-size:11px;color:var(--text3);line-height:1.7}
-.net-recovery-banner .nr-desc strong{color:var(--text2)}
-.net-recovery-banner .nr-value{font-size:32px;font-weight:700;font-family:monospace;white-space:nowrap}
+.nr-grid{display:grid;grid-template-columns:repeat(3,1fr) auto;gap:12px;align-items:stretch;margin-top:12px}
+@media(max-width:700px){.nr-grid{grid-template-columns:repeat(2,1fr)}}
+.nr-comp{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.nr-comp .nr-comp-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.nr-comp .nr-comp-val{font-size:22px;font-weight:700;font-family:monospace}
+.nr-comp .nr-comp-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.nr-result{border-radius:10px;padding:14px 20px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:4px;min-width:160px}
+.nr-result .nr-res-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.nr-result .nr-res-val{font-size:32px;font-weight:700;font-family:monospace;white-space:nowrap}
+.nr-result .nr-res-eq{font-size:10px;color:inherit;opacity:0.7;margin-top:2px}
 /* ────────────────────────────────────────────────────────── */
 @media(max-width:900px){.crow{grid-template-columns:1fr}}
 @media(max-width:600px){.kgrid{grid-template-columns:repeat(2,1fr)}.header h1{min-width:unset}}
@@ -608,16 +612,27 @@ function renderFinancialOverview() {
     </div>`;
 
   document.getElementById('finBanner').innerHTML = `
-    <div class="net-recovery-banner" style="background:${netBg};border:1px solid ${netBorder}">
-      <div class="nr-left">
-        <div class="nr-label" style="color:${netCol}">Net Recovery Position</div>
-        <div class="nr-desc">
-          Subs Sales · Total Recovered <strong>${fmt$(totalRecovered)}</strong>
-          &nbsp;+&nbsp; Seller Recoupment <strong>${fmt$(recoupment)}</strong>
-          &nbsp;−&nbsp; New Ticket Spend <strong>${fmt$(totalNewTicket)}</strong>
-        </div>
+    <div class="nr-grid">
+      <div class="nr-comp" style="border-color:rgba(52,208,122,0.35)">
+        <div class="nr-comp-label">Total Recovered</div>
+        <div class="nr-comp-val" style="color:var(--green)">${fmt$(totalRecovered)}</div>
+        <div class="nr-comp-sub">Subs Sales · Sold + Partially Sold</div>
       </div>
-      <div class="nr-value" style="color:${netCol}">${sign$(netRecovery)}</div>
+      <div class="nr-comp" style="border-color:rgba(52,208,122,0.25)">
+        <div class="nr-comp-label">Seller Recoupment</div>
+        <div class="nr-comp-val" style="color:${recoupment > 0 ? 'var(--green)' : 'var(--text3)'}">${recoupment > 0 ? fmt$(recoupment) : '—'}</div>
+        <div class="nr-comp-sub">Seller Fault · Adjustment logged</div>
+      </div>
+      <div class="nr-comp" style="border-color:rgba(240,169,58,0.35)">
+        <div class="nr-comp-label">New Ticket Spend</div>
+        <div class="nr-comp-val" style="color:var(--amber)">${fmt$(totalNewTicket)}</div>
+        <div class="nr-comp-sub">Cost to purchase subs · all groups</div>
+      </div>
+      <div class="nr-result" style="background:${netBg};border:1px solid ${netBorder}">
+        <div class="nr-res-label" style="color:${netCol}">Net Recovery</div>
+        <div class="nr-res-val" style="color:${netCol}">${sign$(netRecovery)}</div>
+        <div class="nr-res-eq" style="color:${netCol}">Recovered − Spend</div>
+      </div>
     </div>`;
 }
 
