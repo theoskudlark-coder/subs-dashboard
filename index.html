@@ -352,7 +352,7 @@ tbody tr:hover td{background:var(--surface2)}
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;
 const BOARD_SS = 9812976093;
-const CACHE_KEY = 'sub_requests_dash_v8';
+const CACHE_KEY = 'sub_requests_dash_v8c';
 const CACHE_TTL = 30 * 60 * 1000;
 
 const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
@@ -531,7 +531,7 @@ async function loadData(start, end) {
   timelineItems = [];  // [{outcome,notifDate,purchDate,compDate,eventDate}]
 
   // ── Sub Requests main groups ──────────────────────────────────
-  const SR_COLS = ['person','status81','numbers','numbers0', COL_DEPT_FAULT, 'date4','text_mkv9zrn9','date_mm0xnj7f','date_mm0xjkym'];
+  const SR_COLS = ['person','status81','numbers','numbers0', COL_DEPT_FAULT, 'date4','text_mkv9zrn9','date_mm0xnj7f','date_mm0xjkym','datepzo2hdt5'];
 
   for (const grp of SR_GRPS) {
     tick(`Loading ${grp.label}…`);
@@ -552,7 +552,9 @@ async function loadData(start, end) {
         // Seller Recoupment: Seller Issue items — New Total Ticket Amount IS the recouped amount
         // (formula__1 returns null via API; numbers0 is the underlying value the formula reads)
         const isSellerIssue = cv[COL_DEPT_FAULT]?.text === 'Seller Issue';
-        if (isSellerIssue && nt > 0) {
+        // Adjustment Date (datepzo2hdt5) being set = accounting has processed the recoupment
+        const adjDateSet = !!cv['datepzo2hdt5']?.text;
+        if (isSellerIssue && adjDateSet && nt > 0) {
           deptData.recoupment += nt;
         }
       }
