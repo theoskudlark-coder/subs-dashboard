@@ -300,7 +300,7 @@ tbody tr:hover td{background:var(--surface2)}
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;
 const BOARD_SS = 9812976093;
-const CACHE_KEY = 'sub_requests_dash_v8b';
+const CACHE_KEY = 'sub_requests_dash_v8';
 const CACHE_TTL = 30 * 60 * 1000;
 
 const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
@@ -575,7 +575,7 @@ function renderFinancialOverview() {
   // New Ticket Spend — all groups, all agents (matches Performance Overview)
   const totalNewTicket = agents.reduce((s, a) => s + a.newTicketAmt, 0);
   // Total Recovered — Subs Sales Sold + Partially Sold (items relisted and sold)
-  const totalRecovered = (ssData?.sold?.sold || 0) + (ssData?.partSold?.sold || 0);
+  const totalRecovered = ssData ? ssData.sold.sold + ssData.partSold.sold : 0;
   // Seller Recoupment — from deptData (Completed group, Seller Fault, adj > 0)
   const recoupment = deptData?.recoupment || 0;
   // Net Recovery = Total Recovered (relisted sales) + Seller Recoupment − New Ticket Spend
@@ -586,27 +586,36 @@ function renderFinancialOverview() {
   const netBorder = isPos ? 'rgba(52,208,122,0.22)' : 'rgba(240,90,90,0.22)';
 
   document.getElementById('finKpis').innerHTML = `
-    <div class="kcard" style="border-color:rgba(52,208,122,0.35)">
-      <div class="klabel">Total Recovered</div>
-      <div class="kval" style="color:var(--green)">+${fmt$(totalRecovered)}</div>
-      <div class="ksub">Subs Sales · sold &amp; partially sold</div>
+    <div class="kcard" style="border-color:rgba(240,169,58,0.35)">
+      <div class="klabel">New Ticket Spend</div>
+      <div class="kval" style="color:var(--amber)">${fmt$(totalNewTicket)}</div>
+      <div class="ksub">Cost to purchase subs · all groups</div>
+    </div>
+    <div class="kcard fin-placeholder">
+      <div class="klabel">Sale Total Collected</div>
+      <div class="kval" style="color:var(--text3)">—</div>
+      <div class="ksub">Paid orders · Datalake pending</div>
     </div>
     <div class="kcard" style="border-color:rgba(52,208,122,0.35)">
       <div class="klabel">Seller Recoupment</div>
-      <div class="kval" style="color:${recoupment > 0 ? 'var(--green)' : 'var(--text3)'}">${recoupment > 0 ? '+' + fmt$(recoupment) : '—'}</div>
-      <div class="ksub">Seller Issue · completed group</div>
+      <div class="kval" style="color:${recoupment > 0 ? 'var(--green)' : 'var(--text3)'}">${recoupment > 0 ? fmt$(recoupment) : '—'}</div>
+      <div class="ksub">Seller Fault · Adjustment logged · Completed group</div>
     </div>
-    <div class="kcard" style="border-color:rgba(240,169,58,0.35)">
-      <div class="klabel">New Ticket Spend</div>
-      <div class="kval" style="color:var(--amber)">−${fmt$(totalNewTicket)}</div>
-      <div class="ksub">Cost to purchase subs · all groups</div>
+    <div class="kcard fin-placeholder">
+      <div class="klabel">Paid to Seller</div>
+      <div class="kval" style="color:var(--text3)">—</div>
+      <div class="ksub">Seller payment status · Datalake pending</div>
     </div>`;
 
   document.getElementById('finBanner').innerHTML = `
     <div class="net-recovery-banner" style="background:${netBg};border:1px solid ${netBorder}">
       <div class="nr-left">
         <div class="nr-label" style="color:${netCol}">Net Recovery Position</div>
-        <div class="nr-desc" style="color:var(--text3)">Recovered + Recoupment − Spend</div>
+        <div class="nr-desc">
+          Subs Sales · Total Recovered <strong>${fmt$(totalRecovered)}</strong>
+          &nbsp;+&nbsp; Seller Recoupment <strong>${fmt$(recoupment)}</strong>
+          &nbsp;−&nbsp; New Ticket Spend <strong>${fmt$(totalNewTicket)}</strong>
+        </div>
       </div>
       <div class="nr-value" style="color:${netCol}">${sign$(netRecovery)}</div>
     </div>`;
@@ -847,7 +856,7 @@ function renderLossTable() {
 
 // ═══════ ORCHESTRATE ══════════════════════════════════════════════
 function renderAll() {
-  try { renderFinancialOverview(); } catch(e) { console.error('finOverview:', e); }   // v8 new — always first
+  renderFinancialOverview();   // v8 new — always first
   renderDeptKPIs();
   renderLossMitKPIs();
   renderKPIs();
