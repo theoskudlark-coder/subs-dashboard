@@ -300,7 +300,7 @@ tbody tr:hover td{background:var(--surface2)}
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;
 const BOARD_SS = 9812976093;
-const CACHE_KEY = 'sub_requests_dash_v8';
+const CACHE_KEY = 'sub_requests_dash_v8b';
 const CACHE_TTL = 30 * 60 * 1000;
 
 const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
@@ -575,7 +575,7 @@ function renderFinancialOverview() {
   // New Ticket Spend — all groups, all agents (matches Performance Overview)
   const totalNewTicket = agents.reduce((s, a) => s + a.newTicketAmt, 0);
   // Total Recovered — Subs Sales Sold + Partially Sold (items relisted and sold)
-  const totalRecovered = ssData ? ssData.sold.sold + ssData.partSold.sold : 0;
+  const totalRecovered = (ssData?.sold?.sold || 0) + (ssData?.partSold?.sold || 0);
   // Seller Recoupment — from deptData (Completed group, Seller Fault, adj > 0)
   const recoupment = deptData?.recoupment || 0;
   // Net Recovery = Total Recovered (relisted sales) + Seller Recoupment − New Ticket Spend
@@ -847,7 +847,7 @@ function renderLossTable() {
 
 // ═══════ ORCHESTRATE ══════════════════════════════════════════════
 function renderAll() {
-  renderFinancialOverview();   // v8 new — always first
+  try { renderFinancialOverview(); } catch(e) { console.error('finOverview:', e); }   // v8 new — always first
   renderDeptKPIs();
   renderLossMitKPIs();
   renderKPIs();
