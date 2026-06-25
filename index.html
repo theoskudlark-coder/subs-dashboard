@@ -884,4 +884,27 @@ async function reload() {
     await loadData(start, end);
     renderAll();
   } catch(e) {
-    document.getElementB
+    ById('loadingPanel').style.display = 'none';
+    showErr('Error loading data: ' + e.message);
+    console.error(e);
+  }
+}
+
+function clearCache() {
+  _lsKeys().filter(k => k.startsWith(CACHE_KEY)).forEach(k => { try{localStorage.removeItem(k);}catch(e){} });
+  document.getElementById('cacheTag').textContent = 'cache cleared';
+  setTimeout(() => document.getElementById('cacheTag').textContent = '', 2500);
+}
+
+// ═══════ INIT — default to current quarter ════════════════════════
+(function init() {
+  const now = new Date();
+  const q   = Math.floor(now.getMonth() / 3);
+  const qs  = new Date(now.getFullYear(), q * 3, 1);
+  const qe  = new Date(now.getFullYear(), q * 3 + 3, 0);
+  document.getElementById('dtStart').value = qs.toISOString().split('T')[0];
+  document.getElementById('dtEnd').value   = qe.toISOString().split('T')[0];
+})();
+</script>
+</body>
+</html>
