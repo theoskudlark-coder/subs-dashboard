@@ -352,7 +352,7 @@ tbody tr:hover td{background:var(--surface2)}
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;
 const BOARD_SS = 9812976093;
-const CACHE_KEY = 'sub_requests_dash_v8c';
+const CACHE_KEY = 'sub_requests_dash_v8d';
 const CACHE_TTL = 30 * 60 * 1000;
 
 const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
@@ -377,7 +377,8 @@ const SS_GRPS = [
 ];
 
 // Event Date column IDs
-const ED_SR = 'text_mkv9zrn9';   // Sub Requests — Event Date / Time
+const ED_SR = 'text_mkv9zrn9';
+  const DATALAKE_API = 'https://datalake.reports.automatiq.com';   // Sub Requests — Event Date / Time
 const ED_SS = 'text_mkwqvqz3';   // Subs Sales   — Event Date / Time
 
 // Dept Fault: Seller Issue = index 3 (use text matching for safety)
@@ -391,6 +392,7 @@ let agents   = [];
 let ssData   = null;
 let deptData = null;
 let timelineItems = [];
+let saleTotalCollected = null;
 
 // ═══════ HELPERS ══════════════════════════════════════════════════
 const fmt$  = v => '$' + Math.abs(Math.round(v)).toLocaleString('en-US');
@@ -507,9 +509,10 @@ async function loadData(start, end) {
   const cached = _lsGet(cacheK);
   if (cached) {
     try {
-      const {ts, a, s, d, tl} = JSON.parse(cached);
+      const {ts, a, s, d, tl, stc} = JSON.parse(cached);
       if (Date.now() - ts < CACHE_TTL) {
         agents = a; ssData = s; deptData = d;
+        saleTotalCollected = stc ?? null;
         timelineItems = (tl || []).map(x=>({
           outcome:x.o, notifDate:x.n?new Date(x.n):null, purchDate:x.p?new Date(x.p):null,
           compDate:x.c?new Date(x.c):null, eventDate:x.e?new Date(x.e):null
@@ -648,7 +651,19 @@ async function loadData(start, end) {
   }
 
   document.getElementById('loadingPanel').style.display = 'none';
-  _lsSet(cacheK, JSON.stringify({ts:Date.now(), a:agents, s:ssData, d:deptData, tl:timelineItems.map(x=>({o:x.outcome,n:x.notifDate?.toISOString(),p:x.purchDate?.toISOString(),c:x.compDate?.toISOString(),e:x.eventDate?.toISOString()}))}));
+  // ── Fetch Sale Total Collected from Datalake ─────────────────────
+  try {
+    const params = encodeURIComponent(JSON.stringify({start, end}));
+    const dlResp = await fetch(
+      `${DATALAKE_API}/reports/subs-sale-total-collected/query/sale_total?params=${params}`
+    );
+    if (dlResp.ok) {
+      const dlData = await dlResp.json();
+      saleTotalCollected = dlData.rows?.[0]?.[1] ?? null;
+    }
+  } catch(e) { saleTotalCollected = null; }
+
+  _lsSet(cacheK, JSON.stringify({ts:Date.now(), a:agents, s:ssData, d:deptData, stc:saleTotalCollected, tl:timelineItems.map(x=>({o:x.outcome,n:x.notifDate?.toISOString(),p:x.purchDate?.toISOString(),c:x.compDate?.toISOString(),e:x.eventDate?.toISOString()}))}));
 }
 
 // ═══════ RENDER: Financial Overview (v8) ══════════════════════════
@@ -672,10 +687,12 @@ function renderFinancialOverview() {
       <div class="kval" style="color:var(--amber)">${fmt$(totalNewTicket)}</div>
       <div class="ksub">Cost to purchase subs · all groups</div>
     </div>
-    <div class="kcard fin-placeholder">
+    <div class="kcard" style="border-color:rgba(79,142,247,0.35)">
       <div class="klabel">Sale Total Collected</div>
-      <div class="kval" style="color:var(--text3)">—</div>
-      <div class="ksub">Paid orders · Datalake pending</div>
+      <div class="kval" style="color:${saleTotalCollected !== null ? 'var(--blue)' : 'var(--text3)'}">
+        ${saleTotalCollected !== null ? fmt$(saleTotalCollected) : '—'}
+      </div>
+      <div class="ksub">${saleTotalCollected !== null ? 'Completed orders · by Event Date' : 'Loading from Datalake…'}</div>
     </div>
     <div class="kcard" style="border-color:rgba(52,208,122,0.35)">
       <div class="klabel">Seller Recoupment</div>
