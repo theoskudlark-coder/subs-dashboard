@@ -657,6 +657,8 @@ function renderFinancialOverview() {
   const totalNewTicket = agents.reduce((s, a) => s + a.newTicketAmt, 0);
   // Total Recovered — Subs Sales Sold + Partially Sold (items relisted and sold)
   const totalRecovered = ssData ? ssData.sold.sold + ssData.partSold.sold : 0;
+  // Sale Total Collected — Completed group, Total Sale column
+  const totalSale = deptData?.totalSale || 0;
   // Seller Recoupment — from deptData (Completed group, Seller Fault, adj > 0)
   const recoupment = deptData?.recoupment || 0;
   // Net Recovery = Total Recovered (relisted sales) + Seller Recoupment − New Ticket Spend
