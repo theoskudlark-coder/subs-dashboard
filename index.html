@@ -353,7 +353,7 @@ tbody tr:hover td{background:var(--surface2)}
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;
 const BOARD_SS = 9812976093;
-const CACHE_KEY = 'sub_requests_dash_v8g';
+const CACHE_KEY = 'sub_requests_dash_v8h';
 const CACHE_TTL = 30 * 60 * 1000;
 
 const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
@@ -492,7 +492,7 @@ function parseNum(cv) {
 function ensureAgent(map, name) {
   if (!map[name]) map[name] = {
     name, s1:0, s2:0, s3:0, can:0, sT:0, gT:0, rate:0,
-    accepted:0, rejected:0, rescinded:0, mutualCancel:0, waitingResp:0,
+    accepted:0, autoAccept:0, rejected:0, rescinded:0, mutualCancel:0, waitingResp:0,
     totalSale:0, newTicketAmt:0, lcNew:0, lcAwaiting:0
   };
   return map[name];
@@ -566,7 +566,7 @@ async function loadData(start, end) {
         faultData[ftLabel].count++;
         faultData[ftLabel].spend += nt;
       }
-      if (grp.key === 'can' && sIdx === 5) deptData.rescinded++;
+      if (grp.key === 'can' && sIdx === 3) deptData.rescinded++;
 
       // ── Timeline collection (Completed + Cancelled only) ──────────────
       if (grp.key === 's1' || grp.key === 'can') {
@@ -593,11 +593,14 @@ async function loadData(start, end) {
         if (EXCL.includes(name)) continue;
         const a = ensureAgent(agentMap, name);
         a[grp.key]++;
-        if (grp.key === 'can') {
+        if (grp.key === 's1' || grp.key === 'can') {
           if      (sIdx === 1) a.accepted++;
+          else if (sIdx === 6) a.autoAccept++;
           else if (sIdx === 2) a.rejected++;
-          else if (sIdx === 3) a.mutualCancel++;
-          else if (sIdx === 5) a.rescinded++;
+        }
+        if (grp.key === 'can') {
+          if      (sIdx === 3) a.rescinded++;
+          else if (sIdx === 4) a.mutualCancel++;
           else if (sIdx === 0) a.waitingResp++;
         }
         a.totalSale    += ts;
@@ -833,26 +836,29 @@ function renderMainTable() {
 
 function renderOfferKPIs() {
   const totAcc  = agents.reduce((s,a)=>s+a.accepted,0);
+  const totAuto = agents.reduce((s,a)=>s+a.autoAccept,0);
   const totRej  = agents.reduce((s,a)=>s+a.rejected,0);
   const totResc = agents.reduce((s,a)=>s+a.rescinded,0);
   const totMC   = agents.reduce((s,a)=>s+a.mutualCancel,0);
   const totWait = agents.reduce((s,a)=>s+a.waitingResp,0);
-  const effTotal = totAcc + totRej;
-  const accRate  = effTotal>0 ? totAcc/effTotal*100 : 0;
+  const totAllAcc = totAcc + totAuto;
+  const effTotal = totAllAcc + totRej;
+  const accRate  = effTotal>0 ? totAllAcc/effTotal*100 : 0;
   const rejRate  = effTotal>0 ? totRej/effTotal*100 : 0;
   document.getElementById('offerKpis').innerHTML = `
-    <div class="kcard"><div class="klabel">Accepted</div><div class="kval" style="color:var(--green)">${totAcc.toLocaleString()}</div><div class="ksub">Offer accepted</div></div>
+    <div class="kcard"><div class="klabel">Accepted</div><div class="kval" style="color:var(--green)">${totAcc.toLocaleString()}</div><div class="ksub">Manual accept</div></div>
+    <div class="kcard"><div class="klabel">Auto-Accept</div><div class="kval" style="color:var(--teal)">${totAuto.toLocaleString()}</div><div class="ksub">System auto-accepted</div></div>
     <div class="kcard"><div class="klabel">Rejected</div><div class="kval" style="color:var(--red)">${totRej.toLocaleString()}</div><div class="ksub">Offer rejected</div></div>
     <div class="kcard"><div class="klabel">Rescinded</div><div class="kval" style="color:var(--blue)">${totResc.toLocaleString()}</div><div class="ksub">Within cancelled</div></div>
     <div class="kcard"><div class="klabel">Mutual Cancel</div><div class="kval" style="color:var(--purple)">${totMC.toLocaleString()}</div><div class="ksub">Mutual cancellation</div></div>
     <div class="kcard"><div class="klabel">Waiting Response</div><div class="kval" style="color:var(--amber)">${totWait.toLocaleString()}</div><div class="ksub">Pending offer decision</div></div>
     <div class="kcard" style="border-left:3px solid var(--amber);grid-column:span 2">
-      <div class="klabel">Effective Offer Rate <span style="font-weight:400;color:var(--text3);font-size:0.72rem">· Accepted + Rejected = 100%</span></div>
+      <div class="klabel">Effective Offer Rate <span style="font-weight:400;color:var(--text3);font-size:0.72rem">· (Accepted + Auto-Accept) + Rejected = 100%</span></div>
       <div style="display:flex;gap:20px;align-items:center;margin:10px 0 6px">
         <div style="text-align:center;min-width:72px">
           <div style="font-size:1.8rem;font-weight:700;color:var(--green);line-height:1">${pct(accRate)}</div>
           <div style="font-size:0.72rem;color:var(--text3);margin-top:2px">Accepted</div>
-          <div style="font-size:0.8rem;color:var(--green);font-weight:600">${totAcc.toLocaleString()}</div>
+          <div style="font-size:0.8rem;color:var(--green);font-weight:600">${totAllAcc.toLocaleString()}</div>
         </div>
         <div style="flex:1">
           <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface2)">
@@ -860,7 +866,7 @@ function renderOfferKPIs() {
             <div style="width:${rejRate}%;background:var(--red);transition:width .4s"></div>
           </div>
           <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:0.72rem;color:var(--text3)">
-            <span>${pct(accRate)} Accepted</span>
+            <span>${pct(accRate)} Accepted/Auto</span>
             <span>${effTotal.toLocaleString()} total effective</span>
             <span>${pct(rejRate)} Rejected</span>
           </div>
@@ -880,19 +886,19 @@ function renderOfferStatus() {
   for(const a of sorted){T.accepted+=a.accepted;T.rejected+=a.rejected;T.rescinded+=a.rescinded;T.mutualCancel+=a.mutualCancel;}
   const tTot = T.accepted+T.rejected+T.rescinded+T.mutualCancel||1;
   const agentBars = sorted.map(a => {
-    const tot = a.accepted+a.rejected+a.rescinded+a.mutualCancel || 1;
+    const tot = a.accepted+a.autoAccept+a.rejected+a.rescinded+a.mutualCancel || 1;
     return `<div class="sbar-row">
       <div class="sbar-name">${a.name.split(' ')[0]}</div>
       <div class="sbar-wrap">
-        <div class="sbar-seg" style="width:${a.accepted/tot*100}%;background:var(--green)"></div>
+        <div class="sbar-seg" style="width:${(a.accepted+a.autoAccept)/tot*100}%;background:var(--green)"></div>
         <div class="sbar-seg" style="width:${a.rejected/tot*100}%;background:var(--red)"></div>
         <div class="sbar-seg" style="width:${a.rescinded/tot*100}%;background:var(--blue)"></div>
         <div class="sbar-seg" style="width:${a.mutualCancel/tot*100}%;background:var(--purple)"></div>
       </div>
-      <div class="sbar-info">${a.accepted}A · ${a.rejected}R · ${a.rescinded}Rc · ${a.mutualCancel}MC</div>
+      <div class="sbar-info">${a.accepted+a.autoAccept}A · ${a.rejected}R · ${a.rescinded}Rc · ${a.mutualCancel}MC</div>
     </div>`;
   }).join('');
-  const totalBar = `<div class="sbar-row" style="border-top:1px solid var(--surface2);margin-top:6px;padding-top:6px"><div class="sbar-name" style="font-weight:700;color:var(--text1)">Team</div><div class="sbar-wrap"><div class="sbar-seg" style="width:${T.accepted/tTot*100}%;background:var(--green)"></div><div class="sbar-seg" style="width:${T.rejected/tTot*100}%;background:var(--red)"></div><div class="sbar-seg" style="width:${T.rescinded/tTot*100}%;background:var(--blue)"></div><div class="sbar-seg" style="width:${T.mutualCancel/tTot*100}%;background:var(--purple)"></div></div><div class="sbar-info" style="font-weight:600">${T.accepted}A · ${T.rejected}R · ${T.rescinded}Rc · ${T.mutualCancel}MC</div></div>`;
+  const totalBar = `<div class="sbar-row" style="border-top:1px solid var(--surface2);margin-top:6px;padding-top:6px"><div class="sbar-name" style="font-weight:700;color:var(--text1)">Team</div><div class="sbar-wrap"><div class="sbar-seg" style="width:${(T.accepted+T.autoAccept)/tTot*100}%;background:var(--green)"></div><div class="sbar-seg" style="width:${T.rejected/tTot*100}%;background:var(--red)"></div><div class="sbar-seg" style="width:${T.rescinded/tTot*100}%;background:var(--blue)"></div><div class="sbar-seg" style="width:${T.mutualCancel/tTot*100}%;background:var(--purple)"></div></div><div class="sbar-info" style="font-weight:600">${T.accepted+T.autoAccept}A · ${T.rejected}R · ${T.rescinded}Rc · ${T.mutualCancel}MC</div></div>`;
   document.getElementById('offerBars').innerHTML = agentBars + totalBar;
 }
 function renderSpendRatio() {
