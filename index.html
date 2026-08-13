@@ -381,7 +381,7 @@ tbody tr:hover td{background:var(--surface2)}
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;
 const BOARD_SS = 9812976093;
-const CACHE_KEY = 'sub_requests_dash_v8l';
+const CACHE_KEY = 'sub_requests_dash_v8m';
 const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours — board history barely changes intraday
 
 const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
@@ -1305,33 +1305,41 @@ function renderOfferByMarketplace() {
   const totR  = mktData.reduce((s,m)=>s+m.rejected,0);
   const totRc = mktData.reduce((s,m)=>s+m.rescinded,0);
   const totMC = mktData.reduce((s,m)=>s+m.mutualCancel,0);
-  const mktBars = mktData.map(m => {
-    const tot = m.accepted+m.autoaccept+m.rejected+m.rescinded+m.mutualCancel || 1;
-    return `<div class="sbar-row">
-      <div class="sbar-name">${m.name}</div>
-      <div class="sbar-wrap">
-        <div class="sbar-seg" style="width:${m.accepted/tot*100}%;background:var(--green)"></div>
-        <div class="sbar-seg" style="width:${m.autoaccept/tot*100}%;background:var(--teal)"></div>
-        <div class="sbar-seg" style="width:${m.rejected/tot*100}%;background:var(--red)"></div>
-        <div class="sbar-seg" style="width:${m.rescinded/tot*100}%;background:var(--blue)"></div>
-        <div class="sbar-seg" style="width:${m.mutualCancel/tot*100}%;background:var(--purple)"></div>
+
+  function countChip(val, label, color) {
+    if (val === 0) return `<span style="color:var(--text3);font-size:12px;opacity:0.45">${val} <span style="font-size:10px">${label}</span></span>`;
+    return `<span style="color:${color};font-size:13px;font-weight:600">${val} <span style="font-size:10px;font-weight:400;opacity:0.8">${label}</span></span>`;
+  }
+
+  function mktRow(name, a, aa, r, rc, mc, isBold) {
+    const tot = a+aa+r+rc+mc || 1;
+    const nameStyle = isBold ? 'font-weight:700;color:var(--text1)' : '';
+    return `<div style="padding:8px 14px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div class="sbar-name" style="${nameStyle}">${name}</div>
+        <div style="flex:1;display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--surface2)">
+          <div style="width:${a/tot*100}%;background:var(--green)"></div>
+          <div style="width:${aa/tot*100}%;background:var(--teal)"></div>
+          <div style="width:${r/tot*100}%;background:var(--red)"></div>
+          <div style="width:${rc/tot*100}%;background:var(--blue)"></div>
+          <div style="width:${mc/tot*100}%;background:var(--purple)"></div>
+        </div>
       </div>
-      <div class="sbar-info">${m.accepted}A · ${m.autoaccept}AA · ${m.rejected}R · ${m.rescinded}Rc · ${m.mutualCancel}MC</div>
+      <div style="display:flex;gap:18px;padding-left:138px;flex-wrap:wrap">
+        ${countChip(a,  'Accepted',  'var(--green)')}
+        ${countChip(aa, 'Auto-Acc',  'var(--teal)')}
+        ${countChip(r,  'Rejected',  'var(--red)')}
+        ${countChip(rc, 'Rescinded', 'var(--blue)')}
+        ${countChip(mc, 'Mut.Cancel','var(--purple)')}
+      </div>
     </div>`;
-  }).join('');
-  const tTot = totA+totAA+totR+totRc+totMC || 1;
-  const teamBar = `<div class="sbar-row" style="border-top:1px solid var(--surface2);margin-top:6px;padding-top:6px">
-    <div class="sbar-name" style="font-weight:700;color:var(--text1)">Team</div>
-    <div class="sbar-wrap">
-      <div class="sbar-seg" style="width:${totA/tTot*100}%;background:var(--green)"></div>
-      <div class="sbar-seg" style="width:${totAA/tTot*100}%;background:var(--teal)"></div>
-      <div class="sbar-seg" style="width:${totR/tTot*100}%;background:var(--red)"></div>
-      <div class="sbar-seg" style="width:${totRc/tTot*100}%;background:var(--blue)"></div>
-      <div class="sbar-seg" style="width:${totMC/tTot*100}%;background:var(--purple)"></div>
-    </div>
-    <div class="sbar-info" style="font-weight:600">${totA}A · ${totAA}AA · ${totR}R · ${totRc}Rc · ${totMC}MC</div>
-  </div>`;
-  document.getElementById('mktOfferBars').innerHTML = mktBars + teamBar;
+  }
+
+  let html = mktData.map(m => mktRow(m.name, m.accepted, m.autoaccept, m.rejected, m.rescinded, m.mutualCancel, false)).join('');
+  html += `<div style="border-top:2px solid var(--border);margin-top:2px">` +
+    mktRow('Team', totA, totAA, totR, totRc, totMC, true) +
+    `</div>`;
+  document.getElementById('mktOfferBars').innerHTML = html;
 }
 
 // ═══════ RENDER: New Ticket Spend by Marketplace ═══════════════════
