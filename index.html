@@ -292,6 +292,7 @@ tbody tr:hover td{background:var(--surface2)}
             <th onclick="sortBy('can')">Cancelled</th>
             <th onclick="sortBy('gT')">Grand Total</th>
             <th onclick="sortBy('rate')">Rate</th>
+            <th onclick="sortBy('trueAcceptRate')">True Acc%</th>
           </tr></thead>
           <tbody id="mainTbody"></tbody>
         </table>
@@ -308,10 +309,9 @@ tbody tr:hover td{background:var(--surface2)}
       <div class="kgrid" id="offerKpis" style="margin-bottom:12px"></div>
       <div id="offerBars"></div>
       <div class="sbar-legend">
+        <div class="sleg"><div class="sleg-dot" style="background:var(--teal)"></div>Auto-Accept</div>
         <div class="sleg"><div class="sleg-dot" style="background:var(--green)"></div>Accepted</div>
         <div class="sleg"><div class="sleg-dot" style="background:var(--red)"></div>Rejected</div>
-        <div class="sleg"><div class="sleg-dot" style="background:var(--blue)"></div>Rescinded</div>
-        <div class="sleg"><div class="sleg-dot" style="background:var(--purple)"></div>Mutual Cancel</div>
       </div>
     </div>
 
@@ -381,7 +381,7 @@ tbody tr:hover td{background:var(--surface2)}
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;
 const BOARD_SS = 9812976093;
-const CACHE_KEY = 'sub_requests_dash_v8j';
+const CACHE_KEY = 'sub_requests_dash_v8k';
 const CACHE_TTL = 30 * 60 * 1000;
 
 const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
@@ -522,6 +522,8 @@ function ensureAgent(map, name) {
   if (!map[name]) map[name] = {
     name, s1:0, s2:0, s3:0, can:0, sT:0, gT:0, rate:0,
     accepted:0, autoAccept:0, rejected:0, rescinded:0, mutualCancel:0, waitingResp:0,
+    sellerFill:0, newRequest:0,
+    conclusiveManual:0, trueAcceptRate:0, blendedDenom:0, blendedRate:0, pctAuto:0,
     totalSale:0, newTicketAmt:0, lcNew:0, lcAwaiting:0
   };
   return map[name];
@@ -630,22 +632,23 @@ async function loadData(start, end) {
       else if (sIdx === 0) mm.waitingResp++;
       mm.spend += nt;
 
-      for (const name of names) {
-        if (EXCL.includes(name)) continue;
+      // money split evenly across valid assignees to avoid double-counting
+      const validNames = names.filter(n => !EXCL.includes(n));
+      const moneyShare = validNames.length > 0 ? 1 / validNames.length : 0;
+      for (const name of validNames) {
         const a = ensureAgent(agentMap, name);
         a[grp.key]++;
-        if (grp.key === 's1' || grp.key === 'can') {
-          if      (sIdx === 1) a.accepted++;
-          else if (sIdx === 6) a.autoAccept++;
-          else if (sIdx === 2) a.rejected++;
-        }
-        if (grp.key === 'can') {
-          if      (sIdx === 3) a.rescinded++;
-          else if (sIdx === 4) a.mutualCancel++;
-          else if (sIdx === 0) a.waitingResp++;
-        }
-        a.totalSale    += ts;
-        a.newTicketAmt += nt;
+        // offer status — all groups, all indices (no group guard)
+        if      (sIdx === 1) a.accepted++;
+        else if (sIdx === 6) a.autoAccept++;
+        else if (sIdx === 2) a.rejected++;
+        else if (sIdx === 3) a.mutualCancel++;
+        else if (sIdx === 5) a.rescinded++;
+        else if (sIdx === 7) a.sellerFill++;
+        else if (sIdx === 0) a.waitingResp++;
+        else if (sIdx === 8) a.newRequest++;
+        a.totalSale    += ts * moneyShare;
+        a.newTicketAmt += nt * moneyShare;
       }
     }
   }
@@ -671,6 +674,13 @@ async function loadData(start, end) {
     a.sT   = a.s1 + a.s2 + a.s3;
     a.gT   = a.sT + a.can;
     a.rate = a.gT > 0 ? a.sT / a.gT * 100 : 0;
+    // True accept rate: manual offers only — auto-accepts excluded from both numerator and denominator
+    a.conclusiveManual = a.accepted + a.rejected;
+    a.trueAcceptRate   = a.conclusiveManual > 0 ? a.accepted / a.conclusiveManual * 100 : 0;
+    // Blended rate: includes auto-accepts (old/misleading method — kept for comparison)
+    a.blendedDenom = a.accepted + a.rejected + a.autoAccept;
+    a.blendedRate  = a.blendedDenom > 0 ? (a.accepted + a.autoAccept) / a.blendedDenom * 100 : 0;
+    a.pctAuto      = a.blendedDenom > 0 ? a.autoAccept / a.blendedDenom * 100 : 0;
   }
   agents = agents.filter(a => a.gT > 0 || a.lcNew > 0 || a.lcAwaiting > 0);
   mktData = Object.values(mktMap).filter(m => m.name !== 'Unknown').sort((a,b) => (b.accepted+b.autoaccept+b.rejected) - (a.accepted+a.autoaccept+a.rejected));
@@ -872,8 +882,9 @@ function renderMainTable() {
       <td style="color:var(--red)">${a.can}</td>
       <td>${a.gT}</td>
       <td><span class="${rc(a.rate)}">${pct(a.rate)}</span></td>
+      <td><span style="color:${a.conclusiveManual>=15?(a.trueAcceptRate>=75?'var(--green)':a.trueAcceptRate>=60?'var(--amber)':'var(--red)'):'var(--text3)'}">${a.conclusiveManual>=15?pct(a.trueAcceptRate):'—'}</span></td>
     </tr>`).join('') +
-    `<tr class="tr-total"><td class="l">Team Total</td><td>${T.s1}</td><td>${T.s2}</td><td>${T.s3}</td><td>${T.sT}</td><td style="color:var(--red)">${T.can}</td><td>${T.gT}</td><td><span class="${rc(tr)}">${pct(tr)}</span></td></tr>`;
+    `<tr class="tr-total"><td class="l">Team Total</td><td>${T.s1}</td><td>${T.s2}</td><td>${T.s3}</td><td>${T.sT}</td><td style="color:var(--red)">${T.can}</td><td>${T.gT}</td><td><span class="${rc(tr)}">${pct(tr)}</span></td><td>—</td></tr>`;
 }
 
 function renderOfferKPIs() {
@@ -883,10 +894,13 @@ function renderOfferKPIs() {
   const totResc = agents.reduce((s,a)=>s+a.rescinded,0);
   const totMC   = agents.reduce((s,a)=>s+a.mutualCancel,0);
   const totWait = agents.reduce((s,a)=>s+a.waitingResp,0);
-  const totAllAcc = totAcc + totAuto;
-  const effTotal = totAllAcc + totRej;
-  const accRate  = effTotal>0 ? totAllAcc/effTotal*100 : 0;
-  const rejRate  = effTotal>0 ? totRej/effTotal*100 : 0;
+  const totAllAcc    = totAcc + totAuto;
+  const effTotal     = totAllAcc + totRej;
+  const accRate      = effTotal>0 ? totAllAcc/effTotal*100 : 0;
+  const rejRate      = effTotal>0 ? totRej/effTotal*100 : 0;
+  const totConclusive = totAcc + totRej;
+  const trueRate     = totConclusive>0 ? totAcc/totConclusive*100 : 0;
+  const autoPct      = effTotal>0 ? totAuto/effTotal*100 : 0;
   document.getElementById('offerKpis').innerHTML = `
     <div class="kcard"><div class="klabel">Accepted</div><div class="kval" style="color:var(--green)">${totAcc.toLocaleString()}</div><div class="ksub">Manual accept</div></div>
     <div class="kcard"><div class="klabel">Auto-Accept</div><div class="kval" style="color:var(--teal)">${totAuto.toLocaleString()}</div><div class="ksub">System auto-accepted</div></div>
@@ -923,25 +937,64 @@ function renderOfferKPIs() {
 }
 
 function renderOfferStatus() {
-  const sorted = [...agents].filter(a=>a.can>0).sort((a,b)=>b.can-a.can);
-  const T = {accepted:0,rejected:0,rescinded:0,mutualCancel:0};
-  for(const a of sorted){T.accepted+=a.accepted;T.rejected+=a.rejected;T.rescinded+=a.rescinded;T.mutualCancel+=a.mutualCancel;}
-  const tTot = T.accepted+T.rejected+T.rescinded+T.mutualCancel||1;
-  const agentBars = sorted.map(a => {
-    const tot = a.accepted+a.autoAccept+a.rejected+a.rescinded+a.mutualCancel || 1;
-    return `<div class="sbar-row">
-      <div class="sbar-name">${a.name.split(' ')[0]}</div>
-      <div class="sbar-wrap">
-        <div class="sbar-seg" style="width:${(a.accepted+a.autoAccept)/tot*100}%;background:var(--green)"></div>
-        <div class="sbar-seg" style="width:${a.rejected/tot*100}%;background:var(--red)"></div>
-        <div class="sbar-seg" style="width:${a.rescinded/tot*100}%;background:var(--blue)"></div>
-        <div class="sbar-seg" style="width:${a.mutualCancel/tot*100}%;background:var(--purple)"></div>
+  const MIN_CONCLUSIVE = 15;
+  const pool = [...agents].filter(a => a.blendedDenom > 0);
+  const ranked   = pool.filter(a => a.conclusiveManual >= MIN_CONCLUSIVE).sort((a,b) => b.trueAcceptRate - a.trueAcceptRate);
+  const lowVol   = pool.filter(a => a.conclusiveManual <  MIN_CONCLUSIVE).sort((a,b) => b.trueAcceptRate - a.trueAcceptRate);
+
+  // Team totals
+  const T = pool.reduce((t,a) => ({
+    auto:t.auto+a.autoAccept, acc:t.acc+a.accepted, rej:t.rej+a.rejected
+  }), {auto:0, acc:0, rej:0});
+  const tConclusive = T.acc + T.rej;
+  const tTrue  = tConclusive > 0 ? T.acc / tConclusive * 100 : 0;
+  const tBlend = (T.acc+T.rej+T.auto) > 0 ? (T.acc+T.auto)/(T.acc+T.rej+T.auto)*100 : 0;
+  const tAuto  = (T.acc+T.rej+T.auto) > 0 ? T.auto/(T.acc+T.rej+T.auto)*100 : 0;
+
+  function agentRow(a, rank) {
+    const trueCol = a.trueAcceptRate >= 75 ? 'var(--green)' : a.trueAcceptRate >= 60 ? 'var(--amber)' : 'var(--red)';
+    const rankBadge = rank != null ? `<span style="font-size:10px;color:var(--text3);margin-right:4px">#${rank}</span>` : '';
+    return `<div class="sbar-row" style="align-items:center;gap:8px">
+      <div class="sbar-name" style="min-width:90px">${rankBadge}${a.name.split(' ')[0]}</div>
+      <div class="sbar-wrap" style="flex:1">
+        <div class="sbar-seg" style="width:${a.pctAuto}%;background:var(--teal)"></div>
+        <div class="sbar-seg" style="width:${a.blendedDenom>0?a.accepted/a.blendedDenom*100:0}%;background:var(--green)"></div>
+        <div class="sbar-seg" style="width:${a.blendedDenom>0?a.rejected/a.blendedDenom*100:0}%;background:var(--red)"></div>
       </div>
-      <div class="sbar-info">${a.accepted+a.autoAccept}A · ${a.rejected}R · ${a.rescinded}Rc · ${a.mutualCancel}MC</div>
+      <div style="min-width:160px;text-align:right;font-size:11px;color:var(--text3);line-height:1.6">
+        <span>${a.autoAccept}AA · ${a.accepted}Acc · ${a.rejected}R</span><br>
+        <span style="color:${trueCol};font-weight:700">True ${pct(a.trueAcceptRate)}</span>
+        <span style="color:var(--text3);margin-left:6px">Blended ${pct(a.blendedRate)}</span>
+        <span style="color:var(--text3);margin-left:6px">${pct(a.pctAuto)} auto</span>
+      </div>
     </div>`;
-  }).join('');
-  const totalBar = `<div class="sbar-row" style="border-top:1px solid var(--surface2);margin-top:6px;padding-top:6px"><div class="sbar-name" style="font-weight:700;color:var(--text1)">Team</div><div class="sbar-wrap"><div class="sbar-seg" style="width:${(T.accepted+T.autoAccept)/tTot*100}%;background:var(--green)"></div><div class="sbar-seg" style="width:${T.rejected/tTot*100}%;background:var(--red)"></div><div class="sbar-seg" style="width:${T.rescinded/tTot*100}%;background:var(--blue)"></div><div class="sbar-seg" style="width:${T.mutualCancel/tTot*100}%;background:var(--purple)"></div></div><div class="sbar-info" style="font-weight:600">${T.accepted+T.autoAccept}A · ${T.rejected}R · ${T.rescinded}Rc · ${T.mutualCancel}MC</div></div>`;
-  document.getElementById('offerBars').innerHTML = agentBars + totalBar;
+  }
+
+  let html = ranked.map((a,i) => agentRow(a, i+1)).join('');
+
+  if (lowVol.length > 0) {
+    html += `<div style="font-size:10px;color:var(--text3);margin:12px 0 6px;padding-top:10px;border-top:1px solid var(--border);letter-spacing:.05em;text-transform:uppercase">Low volume (&lt;${MIN_CONCLUSIVE} manual offers — rate not reliable)</div>`;
+    html += lowVol.map(a => agentRow(a, null)).join('');
+  }
+
+  // Team row
+  const tCol = tTrue >= 75 ? 'var(--green)' : tTrue >= 60 ? 'var(--amber)' : 'var(--red)';
+  html += `<div class="sbar-row" style="border-top:1px solid var(--surface2);margin-top:8px;padding-top:8px;align-items:center;gap:8px">
+    <div class="sbar-name" style="min-width:90px;font-weight:700;color:var(--text1)">Team</div>
+    <div class="sbar-wrap" style="flex:1">
+      <div class="sbar-seg" style="width:${tAuto}%;background:var(--teal)"></div>
+      <div class="sbar-seg" style="width:${(T.acc+T.rej+T.auto)>0?T.acc/(T.acc+T.rej+T.auto)*100:0}%;background:var(--green)"></div>
+      <div class="sbar-seg" style="width:${(T.acc+T.rej+T.auto)>0?T.rej/(T.acc+T.rej+T.auto)*100:0}%;background:var(--red)"></div>
+    </div>
+    <div style="min-width:160px;text-align:right;font-size:11px;color:var(--text3);line-height:1.6">
+      <span>${T.auto}AA · ${T.acc}Acc · ${T.rej}R</span><br>
+      <span style="color:${tCol};font-weight:700">True ${pct(tTrue)}</span>
+      <span style="color:var(--text3);margin-left:6px">Blended ${pct(tBlend)}</span>
+      <span style="color:var(--text3);margin-left:6px">${pct(tAuto)} auto</span>
+    </div>
+  </div>`;
+
+  document.getElementById('offerBars').innerHTML = html;
 }
 function renderSpendRatio() {
   const sorted = [...agents].filter(a=>a.totalSale>0||a.newTicketAmt>0).sort((a,b)=>b.totalSale-a.totalSale);
