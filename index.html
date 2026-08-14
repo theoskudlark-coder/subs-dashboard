@@ -299,19 +299,14 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
-    <!-- ══ Offer Status ══════════════════════════════════════════ -->
+    <!-- ══ Manual Offer Success Rate ════════════════════════════ -->
     <div class="section-header">
-      <span class="section-header-text">Offer Status by Agent</span>
+      <span class="section-header-text">Manual Offer Success Rate</span>
       <div class="section-divider"></div>
     </div>
     <div class="tpanel">
-      <div class="thead2"><div class="ptitle">Team offer KPIs</div></div>
+      <div class="thead2"><div class="ptitle">Accepted vs Rejected &nbsp;·&nbsp; <span style="font-weight:400;color:var(--text3)">excludes auto-accepts · min 15 conclusive offers to rank</span></div></div>
       <div class="kgrid" id="offerKpis" style="margin-bottom:12px"></div>
-    </div>
-
-    <!-- Manual success rate sub-panel -->
-    <div class="tpanel" style="margin-top:12px">
-      <div class="thead2"><div class="ptitle">Manual offer success rate &nbsp;·&nbsp; <span style="font-weight:400;color:var(--text3)">Accepted vs Rejected — excludes auto-accepts</span></div></div>
       <div id="offerBarsManual"></div>
       <div class="sbar-legend">
         <div class="sleg"><div class="sleg-dot" style="background:var(--green)"></div>Accepted</div>
@@ -319,9 +314,13 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
-    <!-- Auto-accept sub-panel -->
-    <div class="tpanel" style="margin-top:12px">
-      <div class="thead2"><div class="ptitle">Auto-accepts by agent &nbsp;·&nbsp; <span style="font-weight:400;color:var(--text3)">System-driven — not counted in success rate</span></div></div>
+    <!-- ══ Auto-Accepts by Agent ══════════════════════════════════ -->
+    <div class="section-header">
+      <span class="section-header-text">Auto-Accepts by Agent</span>
+      <div class="section-divider"></div>
+    </div>
+    <div class="tpanel">
+      <div class="thead2"><div class="ptitle">System-driven accepts &nbsp;·&nbsp; <span style="font-weight:400;color:var(--text3)">not counted in success rate</span></div></div>
       <div id="offerBarsAuto"></div>
     </div>
 
@@ -401,7 +400,7 @@ tbody tr:hover td{background:var(--surface2)}
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;
 const BOARD_SS = 9812976093;
-const CACHE_KEY = 'sub_requests_dash_v8o';
+const CACHE_KEY = 'sub_requests_dash_v8p';
 const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours — board history barely changes intraday
 
 const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
