@@ -400,7 +400,7 @@ tbody tr:hover td{background:var(--surface2)}
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;
 const BOARD_SS = 9812976093;
-const CACHE_KEY = 'sub_requests_dash_v8p';
+const CACHE_KEY = 'sub_requests_dash_v8q';
 const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours — board history barely changes intraday
 
 const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
@@ -961,13 +961,9 @@ function renderOfferKPIs() {
   const totResc = agents.reduce((s,a)=>s+a.rescinded,0);
   const totMC   = agents.reduce((s,a)=>s+a.mutualCancel,0);
   const totWait = agents.reduce((s,a)=>s+a.waitingResp,0);
-  const totAllAcc    = totAcc + totAuto;
-  const effTotal     = totAllAcc + totRej;
-  const accRate      = effTotal>0 ? totAllAcc/effTotal*100 : 0;
-  const rejRate      = effTotal>0 ? totRej/effTotal*100 : 0;
   const totConclusive = totAcc + totRej;
   const trueRate     = totConclusive>0 ? totAcc/totConclusive*100 : 0;
-  const autoPct      = effTotal>0 ? totAuto/effTotal*100 : 0;
+  const rejRate      = totConclusive>0 ? totRej/totConclusive*100 : 0;
   document.getElementById('offerKpis').innerHTML = `
     <div class="kcard"><div class="klabel">Accepted</div><div class="kval" style="color:var(--green)">${totAcc.toLocaleString()}</div><div class="ksub">Manual accept</div></div>
     <div class="kcard"><div class="klabel">Auto-Accept</div><div class="kval" style="color:var(--teal)">${totAuto.toLocaleString()}</div><div class="ksub">System auto-accepted</div></div>
@@ -975,22 +971,22 @@ function renderOfferKPIs() {
     <div class="kcard"><div class="klabel">Rescinded</div><div class="kval" style="color:var(--blue)">${totResc.toLocaleString()}</div><div class="ksub">Within cancelled</div></div>
     <div class="kcard"><div class="klabel">Mutual Cancel</div><div class="kval" style="color:var(--purple)">${totMC.toLocaleString()}</div><div class="ksub">Mutual cancellation</div></div>
     <div class="kcard"><div class="klabel">Waiting Response</div><div class="kval" style="color:var(--amber)">${totWait.toLocaleString()}</div><div class="ksub">Pending offer decision</div></div>
-    <div class="kcard" style="border-left:3px solid var(--amber);grid-column:1 / -1">
-      <div class="klabel">Effective Offer Rate <span style="font-weight:400;color:var(--text3);font-size:0.72rem">· (Accepted + Auto-Accept) + Rejected = 100%</span></div>
+    <div class="kcard" style="border-left:3px solid var(--green);grid-column:1 / -1">
+      <div class="klabel">Manual Offer Success Rate <span style="font-weight:400;color:var(--text3);font-size:0.72rem">· Accepted + Rejected = 100% &nbsp;(auto-accepts excluded)</span></div>
       <div style="display:flex;gap:20px;align-items:center;margin:10px 0 6px">
         <div style="text-align:center;min-width:72px">
-          <div style="font-size:1.8rem;font-weight:700;color:var(--green);line-height:1">${pct(accRate)}</div>
+          <div style="font-size:1.8rem;font-weight:700;color:var(--green);line-height:1">${pct(trueRate)}</div>
           <div style="font-size:0.72rem;color:var(--text3);margin-top:2px">Accepted</div>
-          <div style="font-size:0.8rem;color:var(--green);font-weight:600">${totAllAcc.toLocaleString()}</div>
+          <div style="font-size:0.8rem;color:var(--green);font-weight:600">${totAcc.toLocaleString()}</div>
         </div>
         <div style="flex:1">
           <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface2)">
-            <div style="width:${accRate}%;background:var(--green);transition:width .4s"></div>
+            <div style="width:${trueRate}%;background:var(--green);transition:width .4s"></div>
             <div style="width:${rejRate}%;background:var(--red);transition:width .4s"></div>
           </div>
           <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:0.72rem;color:var(--text3)">
-            <span>${pct(accRate)} Accepted/Auto</span>
-            <span>${effTotal.toLocaleString()} total effective</span>
+            <span>${pct(trueRate)} Accepted</span>
+            <span>${totConclusive.toLocaleString()} total manual offers</span>
             <span>${pct(rejRate)} Rejected</span>
           </div>
         </div>
