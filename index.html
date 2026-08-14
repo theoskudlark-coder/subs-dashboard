@@ -321,6 +321,7 @@ tbody tr:hover td{background:var(--surface2)}
     </div>
     <div class="tpanel">
       <div class="thead2"><div class="ptitle">System-driven accepts &nbsp;·&nbsp; <span style="font-weight:400;color:var(--text3)">not counted in success rate</span></div></div>
+      <div class="kgrid" id="autoKpis" style="margin-bottom:12px"></div>
       <div id="offerBarsAuto"></div>
     </div>
 
@@ -400,7 +401,7 @@ tbody tr:hover td{background:var(--surface2)}
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR = 4969640884;
 const BOARD_SS = 9812976093;
-const CACHE_KEY = 'sub_requests_dash_v8q';
+const CACHE_KEY = 'sub_requests_dash_v8r';
 const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours — board history barely changes intraday
 
 const EXCL = ['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
@@ -966,7 +967,6 @@ function renderOfferKPIs() {
   const rejRate      = totConclusive>0 ? totRej/totConclusive*100 : 0;
   document.getElementById('offerKpis').innerHTML = `
     <div class="kcard"><div class="klabel">Accepted</div><div class="kval" style="color:var(--green)">${totAcc.toLocaleString()}</div><div class="ksub">Manual accept</div></div>
-    <div class="kcard"><div class="klabel">Auto-Accept</div><div class="kval" style="color:var(--teal)">${totAuto.toLocaleString()}</div><div class="ksub">System auto-accepted</div></div>
     <div class="kcard"><div class="klabel">Rejected</div><div class="kval" style="color:var(--red)">${totRej.toLocaleString()}</div><div class="ksub">Offer rejected</div></div>
     <div class="kcard"><div class="klabel">Rescinded</div><div class="kval" style="color:var(--blue)">${totResc.toLocaleString()}</div><div class="ksub">Within cancelled</div></div>
     <div class="kcard"><div class="klabel">Mutual Cancel</div><div class="kval" style="color:var(--purple)">${totMC.toLocaleString()}</div><div class="ksub">Mutual cancellation</div></div>
@@ -1055,6 +1055,10 @@ function renderOfferStatus() {
   document.getElementById('offerBarsManual').innerHTML = manualHtml;
 
   // ── Panel 2: Auto-accepts ─────────────────────────────────────
+  const autoKpisEl = document.getElementById('autoKpis');
+  if (autoKpisEl) {
+    autoKpisEl.innerHTML = `<div class="kcard"><div class="klabel">Auto-Accept</div><div class="kval" style="color:var(--teal)">${T.auto.toLocaleString()}</div><div class="ksub">System auto-accepted</div></div>`;
+  }
   const aaPool = [...pool].filter(a => a.autoAccept > 0).sort((a,b) => b.autoAccept - a.autoAccept);
   const maxAA  = Math.max(...aaPool.map(a => a.autoAccept), 1);
   let autoHtml = aaPool.map(a => `<div class="sbar-row" style="align-items:center;gap:8px">
