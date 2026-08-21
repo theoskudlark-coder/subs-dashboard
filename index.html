@@ -1019,38 +1019,62 @@ function renderOfferKPIs() {
 
 function renderOfferStatus(){
   var COLORS={accepted:"#22c55e",autoAccept:"#0ea5e9",rejected:"#ef4444",rescinded:"#f97316",mutualCancel:"#a855f7"};
-  function mkBar(a){var tot=a.accepted+a.autoAccept+a.rejected+a.rescinded+a.mutualCancel;if(!tot)return '<div class="mini-bar"></div>';var s=[["accepted",a.accepted],["autoAccept",a.autoAccept],["rejected",a.rejected],["rescinded",a.rescinded],["mutualCancel",a.mutualCancel]];return '<div class="mini-bar">'+s.filter(function(x){return x[1]>0}).map(function(x){return '<div style="flex:'+x[1]+';background:'+COLORS[x[0]]+';height:100%"></div>'}).join("")+"</div>";}
-  function mkMktBar(m){var tot=m.accepted+m.autoAccept+m.rejected+m.rescinded+m.mutualCancel;if(!tot)return '<div class="mkt-sub-bar"></div>';var s=[[m.accepted,"#22c55e"],[m.autoAccept,"#0ea5e9"],[m.rejected,"#ef4444"],[m.rescinded,"#f97316"],[m.mutualCancel,"#a855f7"]];return '<div class="mkt-sub-bar">'+s.filter(function(x){return x[0]>0}).map(function(x){return '<div style="flex:'+x[0]+';background:'+x[1]+';height:100%"></div>'}).join("")+"</div>";}
+  function mkBar(a){var tot=a.accepted+a.autoAccept+a.rejected+a.rescinded+a.mutualCancel;if(!tot)return'<div class="mini-bar"></div>';var s=[["accepted",a.accepted],["autoAccept",a.autoAccept],["rejected",a.rejected],["rescinded",a.rescinded],["mutualCancel",a.mutualCancel]];return'<div class="mini-bar">'+s.filter(function(x){return x[1]>0}).map(function(x){return'<div style="flex:'+x[1]+';background:'+COLORS[x[0]]+';height:100%"></div>'}).join("")+"</div>";}
+  function mkMktBar(m){var tot=m.accepted+m.autoAccept+m.rejected+m.rescinded+m.mutualCancel;if(!tot)return'<div class="mkt-sub-bar"></div>';var s=[[m.accepted,"#22c55e"],[m.autoAccept,"#0ea5e9"],[m.rejected,"#ef4444"],[m.rescinded,"#f97316"],[m.mutualCancel,"#a855f7"]];return'<div class="mkt-sub-bar">'+s.filter(function(x){return x[0]>0}).map(function(x){return'<div style="flex:'+x[0]+';background:'+x[1]+';height:100%"></div>'}).join("")+"</div>";}
   var MIN=15;
   var pool=agents.filter(function(a){return a.blendedDenom>0||a.accepted>0||a.autoAccept>0;});
   var ranked=pool.filter(function(a){return a.conclusiveManual>=MIN;}).sort(function(a,b){return b.trueAcceptRate-a.trueAcceptRate;});
   var unranked=pool.filter(function(a){return a.conclusiveManual<MIN;}).sort(function(a,b){return(b.accepted+b.autoAccept)-(a.accepted+a.autoAccept);});
   var sorted=ranked.concat(unranked);
   var manEl=document.getElementById("offerBarsManual");
-  var autoEl=document.getElementById("offerBarsAuto");
-  if(autoEl)autoEl.innerHTML="";
-  if(!sorted.length){if(manEl)manEl.innerHTML='<div class="empty-state">No offer data for selected range.</div>';return;}
-  var html="";
-  sorted.forEach(function(a,i){
-    var tot=a.accepted+a.autoAccept+a.rejected+a.rescinded+a.mutualCancel;
-    var trueAcc=(a.accepted+a.rejected)>0?Math.round(a.accepted/(a.accepted+a.rejected)*100):null;
-    var blend=a.blendedDenom>0?Math.round(a.blendedRate*100):null;
-    var stats="";
-    if(trueAcc!==null)stats+='<span class="acc-stat" style="color:#22c55e">'+trueAcc+"% True Acc</span>";
-    if(blend!==null)stats+='<span class="acc-stat" style="color:#0ea5e9">'+blend+"% Blended</span>";
-    stats+='<span class="acc-stat-offers">'+tot+" offers</span>";
-    html+='<div class="acc-row">';
-    html+='<div class="acc-header" id="oAHdr-'+i+'" onclick="toggleOfferAcc('+i+')">'+'<span class="acc-chevron">&#9654;</span><span class="acc-name">'+a.name+"</span>"+mkBar(a)+'<div class="acc-stats">'+stats+"</div></div>";
-    var mktData=agentMktMap[a.name]||{};
-    var mkts=Object.values(mktData).sort(function(x,y){return(y.accepted+y.autoAccept)-(x.accepted+x.autoAccept);});
-    var body=mkts.map(function(m){
-      var mPct=(m.accepted+m.rejected)>0?Math.round(m.accepted/(m.accepted+m.rejected)*100):null;
-      return '<div class="mkt-sub-row"><div class="mkt-sub-name">'+m.name+"</div>"+mkMktBar(m)+'<div class="mkt-sub-counts"><span class="mkt-count"><span class="mkt-count-num" style="color:#22c55e">'+m.accepted+'</span><span class="mkt-count-lbl">Acc</span></span><span class="mkt-count"><span class="mkt-count-num" style="color:#0ea5e9">'+m.autoAccept+'</span><span class="mkt-count-lbl">AA</span></span><span class="mkt-count"><span class="mkt-count-num" style="color:#ef4444">'+m.rejected+'</span><span class="mkt-count-lbl">Rej</span></span><span class="mkt-count"><span class="mkt-count-num" style="color:#f97316">'+m.rescinded+'</span><span class="mkt-count-lbl">Rc</span></span><span class="mkt-count"><span class="mkt-count-num" style="color:#a855f7">'+m.mutualCancel+'</span><span class="mkt-count-lbl">MC</span></span>'+(mPct!==null?'<span class="mkt-count" style="margin-left:auto"><span class="mkt-count-num" style="color:#22c55e">'+mPct+'%</span><span class="mkt-count-lbl">Acc</span></span>':"")+'</div></div>';
-    }).join("");
-    html+='<div class="acc-body" id="oABody-'+i+'">'+body+"</div>";
-    html+="</div>";
-  });
-  if(manEl)manEl.innerHTML=html;
+  if(!sorted.length){if(manEl)manEl.innerHTML='<div class="empty-state">No offer data for selected range.</div>';}
+  else{
+    var html="";
+    sorted.forEach(function(a,i){
+      var tot=a.accepted+a.autoAccept+a.rejected+a.rescinded+a.mutualCancel;
+      var trueAcc=(a.accepted+a.rejected)>0?Math.round(a.accepted/(a.accepted+a.rejected)*100):null;
+      var blend=a.blendedDenom>0?Math.round(a.blendedRate*100):null;
+      var stats="";
+      if(trueAcc!==null)stats+='<span class="acc-stat" style="color:#22c55e">'+trueAcc+"% True Acc</span>";
+      if(blend!==null)stats+='<span class="acc-stat" style="color:#0ea5e9">'+blend+"% Blended</span>";
+      stats+='<span class="acc-stat-offers">'+tot+" offers</span>";
+      html+='<div class="acc-row"><div class="acc-header" id="oAHdr-'+i+'" onclick="toggleOfferAcc('+i+')"><span class="acc-chevron">&#9654;</span><span class="acc-name">'+a.name+"</span>"+mkBar(a)+'<div class="acc-stats">'+stats+"</div></div>";
+      var mktData=agentMktMap[a.name]||{};
+      var mkts=Object.values(mktData).sort(function(x,y){return(y.accepted+y.autoAccept)-(x.accepted+x.autoAccept);});
+      var body=mkts.map(function(m){
+        var mPct=(m.accepted+m.rejected)>0?Math.round(m.accepted/(m.accepted+m.rejected)*100):null;
+        return'<div class="mkt-sub-row"><div class="mkt-sub-name">'+m.name+"</div>"+mkMktBar(m)+'<div class="mkt-sub-counts"><span class="mkt-count"><span class="mkt-count-num" style="color:#22c55e">'+m.accepted+'</span><span class="mkt-count-lbl">Acc</span></span><span class="mkt-count"><span class="mkt-count-num" style="color:#0ea5e9">'+m.autoAccept+'</span><span class="mkt-count-lbl">AA</span></span><span class="mkt-count"><span class="mkt-count-num" style="color:#ef4444">'+m.rejected+'</span><span class="mkt-count-lbl">Rej</span></span><span class="mkt-count"><span class="mkt-count-num" style="color:#f97316">'+m.rescinded+'</span><span class="mkt-count-lbl">Rc</span></span><span class="mkt-count"><span class="mkt-count-num" style="color:#a855f7">'+m.mutualCancel+'</span><span class="mkt-count-lbl">MC</span></span>'+(mPct!==null?'<span class="mkt-count" style="margin-left:auto"><span class="mkt-count-num" style="color:#22c55e">'+mPct+'%</span><span class="mkt-count-lbl">Acc</span></span>':"")+'</div></div>';
+      }).join("");
+      html+='<div class="acc-body" id="oABody-'+i+'">'+body+"</div></div>";
+    });
+    if(manEl)manEl.innerHTML=html;
+  }
+  
+
+  // ── Panel 2: Auto-accepts ─────────────────────────────────────
+  const autoKpisEl = document.getElementById('autoKpis');
+  if (autoKpisEl) {
+    autoKpisEl.innerHTML = `<div class="kcard"><div class="klabel">Auto-Accept</div><div class="kval" style="color:var(--teal)">${T.auto.toLocaleString()}</div><div class="ksub">System auto-accepted</div></div>`;
+  }
+  const aaPool = [...pool].filter(a => a.autoAccept > 0).sort((a,b) => b.autoAccept - a.autoAccept);
+  const maxAA  = Math.max(...aaPool.map(a => a.autoAccept), 1);
+  let autoHtml = aaPool.map(a => `<div class="sbar-row" style="align-items:center;gap:8px">
+    <div class="sbar-name" style="min-width:90px">${a.name.split(' ')[0]}</div>
+    <div class="sbar-wrap" style="flex:1">
+      <div class="sbar-seg" style="width:${a.autoAccept/maxAA*100}%;background:var(--teal)"></div>
+    </div>
+    <div style="min-width:60px;text-align:right;font-size:12px;font-weight:600;color:var(--teal)">${a.autoAccept} <span style="font-size:10px;font-weight:400;color:var(--text3)">AA</span></div>
+  </div>`).join('');
+  // Team total
+  autoHtml += `<div class="sbar-row" style="border-top:1px solid var(--surface2);margin-top:8px;padding-top:8px;align-items:center;gap:8px">
+    <div class="sbar-name" style="min-width:90px;font-weight:700;color:var(--text1)">Team</div>
+    <div class="sbar-wrap" style="flex:1">
+      <div class="sbar-seg" style="width:100%;background:var(--teal)"></div>
+    </div>
+    <div style="min-width:60px;text-align:right;font-size:12px;font-weight:600;color:var(--teal)">${T.auto} <span style="font-size:10px;font-weight:400;color:var(--text3)">AA total</span></div>
+  </div>`;
+  document.getElementById('offerBarsAuto').innerHTML = autoHtml;
+
 }
 function toggleOfferAcc(i){
   var hdr=document.getElementById("oAHdr-"+i);
