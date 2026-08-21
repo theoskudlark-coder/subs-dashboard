@@ -97,6 +97,30 @@ tbody tr:hover td{background:var(--surface2)}
 .nr-result .nr-res-val{font-size:32px;font-weight:700;font-family:monospace;white-space:nowrap}
 .nr-result .nr-res-eq{font-size:10px;color:inherit;opacity:0.7;margin-top:2px}
 /* ────────────────────────────────────────────────────────── */
+/* ── Accordion: Offer Status by Agent ─────────────────────────────────────────────── */
+.acc-row{border-bottom:1px solid var(--border)}
+.acc-row:last-child{border-bottom:none}
+.acc-header{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;transition:background .15s;user-select:none}
+.acc-header:hover{background:var(--surface2)}
+.acc-header.open{background:var(--surface2)}
+.acc-chevron{font-size:10px;color:var(--text3);width:12px;flex-shrink:0;transition:transform .2s;display:inline-block}
+.acc-header.open .acc-chevron{transform:rotate(90deg)}
+.acc-name{width:118px;font-size:12px;color:var(--text2);flex-shrink:0;overflow:hidden;text-overflow:ellipsis}
+.acc-header.team-row .acc-name{font-weight:700;color:var(--text1)}
+.acc-stats{display:flex;align-items:center;gap:12px;margin-left:auto;padding-left:12px;flex-shrink:0}
+.acc-stat{font-size:12px;font-weight:600;white-space:nowrap}
+.acc-stat-offers{font-size:11px;color:var(--text3);white-space:nowrap}
+.acc-body{display:none;background:var(--bg);border-top:1px solid var(--border)}
+.acc-body.open{display:block}
+.mkt-sub-row{padding:8px 14px 8px 34px;border-bottom:1px solid var(--border)}
+.mkt-sub-row:last-child{border-bottom:none}
+.mkt-sub-inner{display:flex;align-items:center;gap:12px}
+.mkt-sub-name{font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:500}
+.mkt-sub-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:6px}
+.mkt-sub-counts{display:flex;gap:16px;flex-wrap:wrap}
+.mkt-count{display:flex;align-items:baseline;gap:4px}
+.mkt-count-num{font-size:13px;font-weight:600}
+.mkt-count-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
 @media(max-width:900px){.crow{grid-template-columns:1fr}}
 @media(max-width:600px){.kgrid{grid-template-columns:repeat(2,1fr)}.header h1{min-width:unset}}
 </style>
@@ -310,6 +334,7 @@ tbody tr:hover td{background:var(--surface2)}
       <div id="offerBarsManual"></div>
       <div class="sbar-legend">
         <div class="sleg"><div class="sleg-dot" style="background:var(--green)"></div>Accepted</div>
+        <div class="sleg"><div class="sleg-dot" style="background:var(--teal)"></div>Auto-Accept</div>
         <div class="sleg"><div class="sleg-dot" style="background:var(--red)"></div>Rejected</div>
       </div>
     </div>
@@ -999,84 +1024,31 @@ function renderOfferKPIs() {
     </div>`;
 }
 
+function toggleOfferAcc(i) {
+  var hdr  = document.getElementById("oAHdr-"+i);
+  var body = document.getElementById("oABody-"+i);
+  var isOpen = body.classList.contains("open");
+  body.classList.toggle("open", !isOpen);
+  hdr.classList.toggle("open", !isOpen);
+}
+
 function renderOfferStatus() {
-  const MIN_CONCLUSIVE = 15;
-  const pool = [...agents].filter(a => a.blendedDenom > 0 || a.accepted > 0 || a.rejected > 0);
-  const ranked = pool.filter(a => a.conclusiveManual >= MIN_CONCLUSIVE)
-                     .sort((a,b) => b.trueAcceptRate - a.trueAcceptRate);
-  const lowVol = pool.filter(a => a.conclusiveManual > 0 && a.conclusiveManual < MIN_CONCLUSIVE)
-                     .sort((a,b) => b.trueAcceptRate - a.trueAcceptRate);
-
-  // Team totals
-  const T = pool.reduce((t,a) => ({
-    auto:t.auto+a.autoAccept, acc:t.acc+a.accepted, rej:t.rej+a.rejected
-  }), {auto:0, acc:0, rej:0});
-  const tConclusive = T.acc + T.rej;
-  const tTrue = tConclusive > 0 ? T.acc / tConclusive * 100 : 0;
-  const tCol  = tTrue >= 75 ? 'var(--green)' : tTrue >= 60 ? 'var(--amber)' : 'var(--red)';
-
-  // ── Panel 1: Manual success rate ─────────────────────────────
-  function manualRow(a, rank) {
-    const tot = a.accepted + a.rejected || 1;
-    const col = a.trueAcceptRate >= 75 ? 'var(--green)' : a.trueAcceptRate >= 60 ? 'var(--amber)' : 'var(--red)';
-    const rankBadge = rank != null ? `<span style="font-size:10px;color:var(--text3);margin-right:3px">#${rank}</span>` : '';
-    const dim = rank == null ? 'opacity:0.65' : '';
-    return `<div class="sbar-row" style="align-items:center;gap:8px;${dim}">
-      <div class="sbar-name" style="min-width:90px">${rankBadge}${a.name.split(' ')[0]}</div>
-      <div class="sbar-wrap" style="flex:1">
-        <div class="sbar-seg" style="width:${a.accepted/tot*100}%;background:var(--green)"></div>
-        <div class="sbar-seg" style="width:${a.rejected/tot*100}%;background:var(--red)"></div>
-      </div>
-      <div style="min-width:150px;text-align:right;font-size:11px;color:var(--text3);line-height:1.7">
-        <span>${a.accepted} Acc &nbsp;·&nbsp; ${a.rejected} Rej</span><br>
-        <span style="color:${col};font-weight:700">True acc ${pct(a.trueAcceptRate)}</span>
-      </div>
-    </div>`;
-  }
-
-  let manualHtml = ranked.map((a,i) => manualRow(a, i+1)).join('');
-  if (lowVol.length) {
-    manualHtml += `<div style="font-size:10px;color:var(--text3);margin:10px 0 4px;padding-top:8px;border-top:1px solid var(--border);letter-spacing:.05em;text-transform:uppercase;padding-left:14px">Low volume (&lt;${MIN_CONCLUSIVE} conclusive offers — rate not reliable)</div>`;
-    manualHtml += lowVol.map(a => manualRow(a, null)).join('');
-  }
-  // Team row
-  const tTot = T.acc + T.rej || 1;
-  manualHtml += `<div class="sbar-row" style="border-top:1px solid var(--surface2);margin-top:8px;padding-top:8px;align-items:center;gap:8px">
-    <div class="sbar-name" style="min-width:90px;font-weight:700;color:var(--text1)">Team</div>
-    <div class="sbar-wrap" style="flex:1">
-      <div class="sbar-seg" style="width:${T.acc/tTot*100}%;background:var(--green)"></div>
-      <div class="sbar-seg" style="width:${T.rej/tTot*100}%;background:var(--red)"></div>
-    </div>
-    <div style="min-width:150px;text-align:right;font-size:11px;color:var(--text3);line-height:1.7">
-      <span>${T.acc} Acc &nbsp;·&nbsp; ${T.rej} Rej</span><br>
-      <span style="color:${tCol};font-weight:700">True acc ${pct(tTrue)}</span>
-    </div>
-  </div>`;
-  document.getElementById('offerBarsManual').innerHTML = manualHtml;
-
-  // ── Panel 2: Auto-accepts ─────────────────────────────────────
-  const autoKpisEl = document.getElementById('autoKpis');
-  if (autoKpisEl) {
-    autoKpisEl.innerHTML = `<div class="kcard"><div class="klabel">Auto-Accept</div><div class="kval" style="color:var(--teal)">${T.auto.toLocaleString()}</div><div class="ksub">System auto-accepted</div></div>`;
-  }
-  const aaPool = [...pool].filter(a => a.autoAccept > 0).sort((a,b) => b.autoAccept - a.autoAccept);
-  const maxAA  = Math.max(...aaPool.map(a => a.autoAccept), 1);
-  let autoHtml = aaPool.map(a => `<div class="sbar-row" style="align-items:center;gap:8px">
-    <div class="sbar-name" style="min-width:90px">${a.name.split(' ')[0]}</div>
-    <div class="sbar-wrap" style="flex:1">
-      <div class="sbar-seg" style="width:${a.autoAccept/maxAA*100}%;background:var(--teal)"></div>
-    </div>
-    <div style="min-width:60px;text-align:right;font-size:12px;font-weight:600;color:var(--teal)">${a.autoAccept} <span style="font-size:10px;font-weight:400;color:var(--text3)">AA</span></div>
-  </div>`).join('');
-  // Team total
-  autoHtml += `<div class="sbar-row" style="border-top:1px solid var(--surface2);margin-top:8px;padding-top:8px;align-items:center;gap:8px">
-    <div class="sbar-name" style="min-width:90px;font-weight:700;color:var(--text1)">Team</div>
-    <div class="sbar-wrap" style="flex:1">
-      <div class="sbar-seg" style="width:100%;background:var(--teal)"></div>
-    </div>
-    <div style="min-width:60px;text-align:right;font-size:12px;font-weight:600;color:var(--teal)">${T.auto} <span style="font-size:10px;font-weight:400;color:var(--text3)">AA total</span></div>
-  </div>`;
-  document.getElementById('offerBarsAuto').innerHTML = autoHtml;
+  var sorted = [...agents].filter(function(a){return a.can>0;}).sort(function(a,b){return b.can-a.can;});
+  var T = sorted.reduce(function(t,a){return {accepted:t.accepted+a.accepted,autoaccept:t.autoaccept+(a.autoaccept||0),rejected:t.rejected+a.rejected,rescinded:t.rescinded+a.rescinded,mutualCancel:t.mutualCancel+a.mutualCancel};},{accepted:0,autoaccept:0,rejected:0,rescinded:0,mutualCancel:0});
+  function offerBar(a,aa,r,rc,mc){var tot=a+aa+r+rc+mc||1;return "<div class=\"sbar-wrap\"><div class=\"sbar-seg\" style=\"width:"+(a/tot*100)+"%;background:var(--green)\"></div><div class=\"sbar-seg\" style=\"width:"+(aa/tot*100)+"%;background:var(--teal)\"></div><div class=\"sbar-seg\" style=\"width:"+(r/tot*100)+"%;background:var(--red)\"></div><div class=\"sbar-seg\" style=\"width:"+(rc/tot*100)+"%;background:var(--blue)\"></div><div class=\"sbar-seg\" style=\"width:"+(mc/tot*100)+"%;background:var(--purple)\"></div></div>";}
+  function trueAcc(a,r){var e=a+r;return e>0?Math.round(a/e*100):0;}
+  function blendAcc(a,aa,r,rc,mc){var t=a+aa+r+rc+mc;return t>0?Math.round((a+aa)/t*100):0;}
+  var agentHTML = sorted.map(function(a,i){
+    var totalOffers=a.accepted+(a.autoaccept||0)+a.rejected+a.rescinded+a.mutualCancel;
+    var trueA=trueAcc(a.accepted,a.rejected);
+    var blendA=blendAcc(a.accepted,(a.autoaccept||0),a.rejected,a.rescinded,a.mutualCancel);
+    var mktList=Object.entries(a.byMkt||{}).sort(function(x,y){return (y[1].accepted+y[1].autoaccept)-(x[1].accepted+x[1].autoaccept);});
+    var mktRows=mktList.map(function(e){var mktName=e[0],m=e[1];var tot=m.accepted+m.autoaccept+m.rejected+m.rescinded+m.mutualCancel||1;var mktAcc=trueAcc(m.accepted,m.rejected);return "<div class=\"mkt-sub-row\"><div class=\"mkt-sub-inner\"><div style=\"flex:1\"><div class=\"mkt-sub-name\">"+mktName+"</div><div class=\"mkt-sub-bar\"><div class=\"sbar-seg\" style=\"width:"+(m.accepted/tot*100)+"%;background:var(--green)\"></div><div class=\"sbar-seg\" style=\"width:"+(m.autoaccept/tot*100)+"%;background:var(--teal)\"></div><div class=\"sbar-seg\" style=\"width:"+(m.rejected/tot*100)+"%;background:var(--red)\"></div><div class=\"sbar-seg\" style=\"width:"+(m.rescinded/tot*100)+"%;background:var(--blue)\"></div><div class=\"sbar-seg\" style=\"width:"+(m.mutualCancel/tot*100)+"%;background:var(--purple)\"></div></div><div class=\"mkt-sub-counts\"><div class=\"mkt-count\"><span class=\"mkt-count-num\" style=\"color:var(--green)\">"+m.accepted+"</span><span class=\"mkt-count-lbl\">Acc</span></div><div class=\"mkt-count\"><span class=\"mkt-count-num\" style=\"color:var(--teal)\">"+m.autoaccept+"</span><span class=\"mkt-count-lbl\">AA</span></div><div class=\"mkt-count\"><span class=\"mkt-count-num\" style=\"color:var(--red)\">"+m.rejected+"</span><span class=\"mkt-count-lbl\">Rej</span></div><div class=\"mkt-count\"><span class=\"mkt-count-num\" style=\"color:var(--blue)\">"+m.rescinded+"</span><span class=\"mkt-count-lbl\">Rc</span></div><div class=\"mkt-count\"><span class=\"mkt-count-num\" style=\"color:var(--purple)\">"+m.mutualCancel+"</span><span class=\"mkt-count-lbl\">MC</span></div></div></div><div style=\"font-size:12px;color:var(--text3);white-space:nowrap;min-width:52px;text-align:right\">"+mktAcc+"% acc</div></div></div>";}).join("");
+    return "<div class=\"acc-row\"><div class=\"acc-header\" onclick=\"toggleOfferAcc("+i+")\" id=\"oAHdr-"+i+"\"><span class=\"acc-chevron\">\u25b6</span><div class=\"acc-name\">"+a.name+"</div>"+offerBar(a.accepted,(a.autoaccept||0),a.rejected,a.rescinded,a.mutualCancel)+"<div class=\"acc-stats\"><span class=\"acc-stat\" style=\"color:var(--green)\">True acc "+trueA+"%</span><span class=\"acc-stat\" style=\"color:var(--teal)\">Blended "+blendA+"%</span><span class=\"acc-stat-offers\">"+totalOffers.toLocaleString()+" offers</span></div></div><div class=\"acc-body\" id=\"oABody-"+i+"\">"+mktRows+"</div></div>";
+  }).join("");
+  var tTot=T.accepted+T.autoaccept+T.rejected+T.rescinded+T.mutualCancel;
+  var teamHTML="<div class=\"acc-row\"><div class=\"acc-header team-row\" style=\"cursor:default\"><span class=\"acc-chevron\" style=\"visibility:hidden\">\u25b6</span><div class=\"acc-name\">Team</div>"+offerBar(T.accepted,T.autoaccept,T.rejected,T.rescinded,T.mutualCancel)+"<div class=\"acc-stats\"><span class=\"acc-stat\" style=\"color:var(--green)\">True acc "+trueAcc(T.accepted,T.rejected)+"%</span><span class=\"acc-stat\" style=\"color:var(--teal)\">Blended "+blendAcc(T.accepted,T.autoaccept,T.rejected,T.rescinded,T.mutualCancel)+"%</span><span class=\"acc-stat-offers\">"+tTot.toLocaleString()+" offers</span></div></div></div>";
+  document.getElementById("offerBars").innerHTML = agentHTML + teamHTML;
 }
 function renderSpendRatio() {
   const sorted = [...agents].filter(a=>a.totalSale>0||a.newTicketAmt>0).sort((a,b)=>b.totalSale-a.totalSale);
