@@ -293,7 +293,7 @@ tbody tr:hover td{background:var(--surface2)}
 <script>
 const TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR=4969640884,BOARD_SS=9812976093;
-const CACHE_KEY='sub_requests_dash_v8e',CACHE_TTL=30*60*1000;
+const CACHE_KEY='sub_requests_dash_v8f',CACHE_TTL=30*60*1000;
 const EXCL=['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
 const SR_GRPS=[
   {gid:'new_group43773',key:'s1',label:'Completed'},
@@ -362,7 +362,7 @@ async function fetchItemsServerDate(boardId,gid,start,end,colIds){
   let items=[],cursor=null,first=true;
   while(first||cursor){
     first=false;
-    const pageArgs=cursor?`limit:500,cursor:"${cursor}"`:`limit:500,query_params:{rules:[{column_id:"group",compare_value:["${gid}"],operator:any_of},{column_id:"date4",compare_value:["${start}","${end}"],operator:between]}`;
+    const pageArgs=cursor?`limit:500,cursor:"${cursor}"`:`limit:500,query_params:{rules:[{column_id:"group",compare_value:["${gid}"],operator:any_of},{column_id:"date4",compare_value:["${start}","${end}"],operator:between}]}`;
     const q=`{boards(ids:[${boardId}]){items_page(${pageArgs}){cursor items{name column_values(ids:[${cols}]){id value text}}}}}`;
     const d=await gql(q);
     const pg=d.boards[0].items_page;
@@ -396,9 +396,14 @@ async function loadData(start,end){
   const agentMap={},mktMap={};
   deptData={s1:0,s2:0,s3:0,can:0,rescinded:0,totalSale:0,newTicketAmt:0,costCeiling:0,recoupment:0};
   const SR_COLS=['person','status81','numbers','numbers0','status29',COL_DEPT_FAULT,'datepzo2hdt5'];
-  for(const grp of SR_GRPS){
-    tick(`Loading ${grp.label}…`);
-    const items=await fetchItems(BOARD_SR,grp.gid,start,end,SR_COLS,ED_SR);
+  // Fire all board fetches in parallel — SR groups, LC groups, SS groups run concurrently
+  const [srResults,lcResults,ssResults]=await Promise.all([
+    Promise.all(SR_GRPS.map(grp=>fetchItems(BOARD_SR,grp.gid,start,end,SR_COLS,ED_SR).then(r=>{tick(`Loading ${grp.label}…`);return r;}))),
+    Promise.all(LC_GRPS.map(grp=>fetchItems(BOARD_SR,grp.gid,start,end,['person'],ED_SR).then(r=>{tick(`Loading lifecycle: ${grp.label}…`);return r;}))),
+    Promise.all(SS_GRPS.map(grp=>fetchItemsServerDate(BOARD_SS,grp.gid,start,end,['status','numeric_mkts722d','numeric_mktsck8h']).then(r=>{tick(`Loading Subs Sales: ${grp.label}…`);return r;})))
+  ]);
+  for(let i=0;i<SR_GRPS.length;i++){
+    const grp=SR_GRPS[i];const items=srResults[i];
     for(const item of items){
       const cv=cvMap(item);
       const names=parsePeopleText(cv['person']);
@@ -428,9 +433,8 @@ async function loadData(start,end){
       }
     }
   }
-  for(const grp of LC_GRPS){
-    tick(`Loading lifecycle: ${grp.label}…`);
-    const items=await fetchItems(BOARD_SR,grp.gid,start,end,['person'],ED_SR);
+  for(let i=0;i<LC_GRPS.length;i++){
+    const grp=LC_GRPS[i];const items=lcResults[i];
     for(const item of items){const cv=cvMap(item);const names=parsePeopleText(cv['person']);for(const name of names){if(EXCL.includes(name))continue;const a=ensureAgent(agentMap,name);a[grp.key]++;}}
   }
   agents=Object.values(agentMap);
@@ -438,11 +442,11 @@ async function loadData(start,end){
   agents=agents.filter(a=>a.gT>0||a.lcNew>0||a.lcAwaiting>0);
   mktData=Object.values(mktMap).filter(m=>m.name!=='Unknown').sort((a,b)=>(b.accepted+b.autoaccept+b.rejected)-(a.accepted+a.autoaccept+a.rejected));
   ssData={sold:{count:0,cost:0,sold:0,profCount:0,lossCount:0},partSold:{count:0,cost:0,sold:0},notSold:{count:0,cost:0,sold:0},spoiled:{count:0,cost:0,sold:0},canceled:{count:0,cost:0,sold:0}};
-  for(const grp of SS_GRPS){
-    tick(`Loading Subs Sales: ${grp.label}…`);
-    const items=await fetchItemsServerDate(BOARD_SS,grp.gid,start,end,['status','numeric_mkts722d','numeric_mktsck8h']);
-    for(const item of items){
-      const cv=cvMap(item);const lbl=cv['status']?.text?.trim()||'';
+  for(let i=0;i<SS_GRPS.length;i++){
+    const grp=SS_GRPS[i];const items=ssResults[i];
+    const cv2=items.map(cvMap);
+    for(let j=0;j<items.length;j++){
+      const cv=cv2[j];const lbl=cv['status']?.text?.trim()||'';
       const cost=parseNum(cv['numeric_mkts722d']);const sold=parseNum(cv['numeric_mktsck8h']);
       if(lbl==='Sold'){ssData.sold.count++;ssData.sold.cost+=cost;ssData.sold.sold+=sold;if(sold>cost)ssData.sold.profCount++;else ssData.sold.lossCount++;}
       else if(lbl==='Partially Sold'){ssData.partSold.count++;ssData.partSold.cost+=cost;ssData.partSold.sold+=sold;}
