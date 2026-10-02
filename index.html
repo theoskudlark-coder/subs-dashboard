@@ -293,7 +293,7 @@ tbody tr:hover td{background:var(--surface2)}
 <script>
 const TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR=4969640884,BOARD_SS=9812976093;
-const CACHE_KEY='sub_requests_dash_v8k',CACHE_TTL=30*60*1000;
+const CACHE_KEY='sub_requests_dash_v8l',CACHE_TTL=30*60*1000;
 const EXCL=['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
 const SR_GRPS=[
   {gid:'new_group43773',key:'s1',label:'Completed'},
@@ -313,7 +313,7 @@ const SS_GRPS=[
 const ED_SR='text_mkv9zrn9',ED_SS='text_mkwqvqz3';
 const COL_DEPT_FAULT='color_mkwzc1mh',COL_ADJ_TOTAL='formula__1';
 const TOTAL_STEPS=SR_GRPS.length+LC_GRPS.length+SS_GRPS.length;
-let _steps=0,agents=[],ssData=null,deptData=null,mktData=null;
+let _steps=0,agents=[],ssData=null,deptData=null,mktData=null,offerTotals={};
 
 const fmt$=v=>'$'+Math.abs(Math.round(v)).toLocaleString('en-US');
 const fmtR=v=>v.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
@@ -393,7 +393,7 @@ async function loadData(start,end){
   document.getElementById('cacheTag').textContent='';
   document.getElementById('loadingPanel').style.display='block';
   _steps=0;document.getElementById('pBar').style.width='0%';
-  const agentMap={},mktMap={},offerTotals={accepted:0,autoaccept:0,rejected:0,mutualCancel:0,rescinded:0,waitingResp:0};
+  const agentMap={},mktMap={};offerTotals={accepted:0,autoaccept:0,rejected:0,mutualCancel:0,rescinded:0,waitingResp:0};
   deptData={s1:0,s2:0,s3:0,can:0,rescinded:0,totalSale:0,newTicketAmt:0,costCeiling:0,recoupment:0};
   const SR_COLS=['person','status81','numbers','numbers0','status29',COL_DEPT_FAULT,'datepzo2hdt5'];
   // Fetch all groups in parallel for max speed
