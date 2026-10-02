@@ -293,7 +293,7 @@ tbody tr:hover td{background:var(--surface2)}
 <script>
 const TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR=4969640884,BOARD_SS=9812976093;
-const CACHE_KEY='sub_requests_dash_v8i',CACHE_TTL=30*60*1000;
+const CACHE_KEY='sub_requests_dash_v8j',CACHE_TTL=30*60*1000;
 const EXCL=['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
 const SR_GRPS=[
   {gid:'new_group43773',key:'s1',label:'Completed'},
@@ -393,7 +393,7 @@ async function loadData(start,end){
   document.getElementById('cacheTag').textContent='';
   document.getElementById('loadingPanel').style.display='block';
   _steps=0;document.getElementById('pBar').style.width='0%';
-  const agentMap={},mktMap={};
+  const agentMap={},mktMap={},offerTotals={accepted:0,rejected:0,mutualCancel:0,rescinded:0,waitingResp:0};
   deptData={s1:0,s2:0,s3:0,can:0,rescinded:0,totalSale:0,newTicketAmt:0,costCeiling:0,recoupment:0};
   const SR_COLS=['person','status81','numbers','numbers0','status29',COL_DEPT_FAULT,'datepzo2hdt5'];
   // Fetch all groups in parallel for max speed
@@ -423,6 +423,7 @@ async function loadData(start,end){
       const mm=mktMap[mktName];
       if(sIdx===1)mm.accepted++;else if(sIdx===6)mm.autoaccept++;else if(sIdx===2)mm.rejected++;else if(sIdx===5)mm.rescinded++;else if(sIdx===3)mm.mutualCancel++;else if(sIdx===0)mm.waitingResp++;
       mm.spend+=nt;
+      if(grp.key==='can'){if(sIdx===1)offerTotals.accepted++;else if(sIdx===2)offerTotals.rejected++;else if(sIdx===3)offerTotals.mutualCancel++;else if(sIdx===5)offerTotals.rescinded++;else if(sIdx===0)offerTotals.waitingResp++;}
       for(const name of names){
         if(EXCL.includes(name))continue;
         const a=ensureAgent(agentMap,name);
@@ -598,8 +599,7 @@ function renderOfferKPIs(){
 
 function renderOfferStatus(){
   const sorted=[...agents].filter(a=>a.can>0).sort((a,b)=>b.can-a.can);
-  const T={accepted:0,rejected:0,rescinded:0,mutualCancel:0};
-  for(const a of sorted){T.accepted+=a.accepted;T.rejected+=a.rejected;T.rescinded+=a.rescinded;T.mutualCancel+=a.mutualCancel;}
+  const T={accepted:offerTotals.accepted,rejected:offerTotals.rejected,rescinded:offerTotals.rescinded,mutualCancel:offerTotals.mutualCancel};
   const tTot=T.accepted+T.rejected+T.rescinded+T.mutualCancel||1;
   const agentBars=sorted.map(a=>{const tot=a.accepted+a.rejected+a.rescinded+a.mutualCancel||1;return`<div class="sbar-row"><div class="sbar-name">${a.name.split(' ')[0]}</div><div class="sbar-wrap"><div class="sbar-seg" style="width:${a.accepted/tot*100}%;background:var(--green)"></div><div class="sbar-seg" style="width:${a.rejected/tot*100}%;background:var(--red)"></div><div class="sbar-seg" style="width:${a.rescinded/tot*100}%;background:var(--blue)"></div><div class="sbar-seg" style="width:${a.mutualCancel/tot*100}%;background:var(--purple)"></div></div><div class="sbar-info">${a.accepted}A · ${a.rejected}R · ${a.rescinded}Rc · ${a.mutualCancel}MC</div></div>`;}).join('');
   const totalBar=`<div class="sbar-row" style="border-top:1px solid var(--surface2);margin-top:6px;padding-top:6px"><div class="sbar-name" style="font-weight:700;color:var(--text1)">Team</div><div class="sbar-wrap"><div class="sbar-seg" style="width:${T.accepted/tTot*100}%;background:var(--green)"></div><div class="sbar-seg" style="width:${T.rejected/tTot*100}%;background:var(--red)"></div><div class="sbar-seg" style="width:${T.rescinded/tTot*100}%;background:var(--blue)"></div><div class="sbar-seg" style="width:${T.mutualCancel/tTot*100}%;background:var(--purple)"></div></div><div class="sbar-info" style="font-weight:600">${T.accepted}A · ${T.rejected}R · ${T.rescinded}Rc · ${T.mutualCancel}MC</div></div>`;
