@@ -293,7 +293,7 @@ tbody tr:hover td{background:var(--surface2)}
 <script>
 const TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR=4969640884,BOARD_SS=9812976093;
-const CACHE_KEY='sub_requests_dash_v8g',CACHE_TTL=30*60*1000;
+const CACHE_KEY='sub_requests_dash_v8h',CACHE_TTL=30*60*1000;
 const EXCL=['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
 const SR_GRPS=[
   {gid:'new_group43773',key:'s1',label:'Completed'},
@@ -396,9 +396,13 @@ async function loadData(start,end){
   const agentMap={},mktMap={};
   deptData={s1:0,s2:0,s3:0,can:0,rescinded:0,totalSale:0,newTicketAmt:0,costCeiling:0,recoupment:0};
   const SR_COLS=['person','status81','numbers','numbers0','status29',COL_DEPT_FAULT,'datepzo2hdt5'];
-  for(const grp of SR_GRPS){
-    tick(`Loading ${grp.label}…`);
-    const items=await fetchItems(BOARD_SR,grp.gid,start,end,SR_COLS,ED_SR);
+  // Fetch all groups in parallel for max speed
+  const [srResults,lcResults,ssResults]=await Promise.all([
+    Promise.all(SR_GRPS.map(grp=>fetchItems(BOARD_SR,grp.gid,start,end,SR_COLS,ED_SR).then(items=>{tick(`✓ ${grp.label}…`);return{grp,items};}))),
+    Promise.all(LC_GRPS.map(grp=>fetchItems(BOARD_SR,grp.gid,start,end,['person'],ED_SR).then(items=>{tick(`✓ ${grp.label}…`);return{grp,items};}))),
+    Promise.all(SS_GRPS.map(grp=>fetchItemsServerDate(BOARD_SS,grp.gid,start,end,['status','numeric_mkts722d','numeric_mktsck8h']).then(items=>{tick(`✓ SS: ${grp.label}…`);return{grp,items};})))
+  ]);
+  for(const {grp,items} of srResults){
     for(const item of items){
       const cv=cvMap(item);
       const names=parsePeopleText(cv['person']);
@@ -428,9 +432,7 @@ async function loadData(start,end){
       }
     }
   }
-  for(const grp of LC_GRPS){
-    tick(`Loading lifecycle: ${grp.label}…`);
-    const items=await fetchItems(BOARD_SR,grp.gid,start,end,['person'],ED_SR);
+  for(const {grp,items} of lcResults){
     for(const item of items){const cv=cvMap(item);const names=parsePeopleText(cv['person']);for(const name of names){if(EXCL.includes(name))continue;const a=ensureAgent(agentMap,name);a[grp.key]++;}}
   }
   agents=Object.values(agentMap);
@@ -438,9 +440,7 @@ async function loadData(start,end){
   agents=agents.filter(a=>a.gT>0||a.lcNew>0||a.lcAwaiting>0);
   mktData=Object.values(mktMap).filter(m=>m.name!=='Unknown').sort((a,b)=>(b.accepted+b.autoaccept+b.rejected)-(a.accepted+a.autoaccept+a.rejected));
   ssData={sold:{count:0,cost:0,sold:0,profCount:0,lossCount:0},partSold:{count:0,cost:0,sold:0},notSold:{count:0,cost:0,sold:0},spoiled:{count:0,cost:0,sold:0},canceled:{count:0,cost:0,sold:0}};
-  for(const grp of SS_GRPS){
-    tick(`Loading Subs Sales: ${grp.label}…`);
-    const items=await fetchItemsServerDate(BOARD_SS,grp.gid,start,end,['status','numeric_mkts722d','numeric_mktsck8h']);
+  for(const {grp,items} of ssResults){
     for(const item of items){
       const cv=cvMap(item);const lbl=cv['status']?.text?.trim()||'';
       const cost=parseNum(cv['numeric_mkts722d']);const sold=parseNum(cv['numeric_mktsck8h']);
