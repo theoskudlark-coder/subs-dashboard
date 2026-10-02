@@ -362,7 +362,7 @@ async function fetchItemsServerDate(boardId,gid,start,end,colIds){
   let items=[],cursor=null,first=true;
   while(first||cursor){
     first=false;
-    const pageArgs=cursor?`limit:500,cursor:"${cursor}"`:`limit:500,query_params:{rules:[{column_id:"group",compare_value:["${gid}"],operator:any_of},{column_id:"date4",compare_value:["${start}","${end}"],operator:between}]}`;
+    const pageArgs=cursor?`limit:500,cursor:"${cursor}"`:`limit:500,query_params:{rules:[{column_id:"group",compare_value:["${gid}"],operator:any_of},{column_id:"date4",compare_value:["${start}","${end}"],operator:between]}`;
     const q=`{boards(ids:[${boardId}]){items_page(${pageArgs}){cursor items{name column_values(ids:[${cols}]){id value text}}}}}`;
     const d=await gql(q);
     const pg=d.boards[0].items_page;
@@ -396,21 +396,16 @@ async function loadData(start,end){
   const agentMap={},mktMap={};
   deptData={s1:0,s2:0,s3:0,can:0,rescinded:0,totalSale:0,newTicketAmt:0,costCeiling:0,recoupment:0};
   const SR_COLS=['person','status81','numbers','numbers0','status29',COL_DEPT_FAULT,'datepzo2hdt5'];
-  // Fire all board fetches in parallel — SR groups, LC groups, SS groups run concurrently
-  const [srResults,lcResults,ssResults]=await Promise.all([
-    Promise.all(SR_GRPS.map(grp=>fetchItems(BOARD_SR,grp.gid,start,end,SR_COLS,ED_SR).then(r=>{tick(`Loading ${grp.label}…`);return r;}))),
-    Promise.all(LC_GRPS.map(grp=>fetchItems(BOARD_SR,grp.gid,start,end,['person'],ED_SR).then(r=>{tick(`Loading lifecycle: ${grp.label}…`);return r;}))),
-    Promise.all(SS_GRPS.map(grp=>fetchItemsServerDate(BOARD_SS,grp.gid,start,end,['status','numeric_mkts722d','numeric_mktsck8h']).then(r=>{tick(`Loading Subs Sales: ${grp.label}…`);return r;})))
-  ]);
-  for(let i=0;i<SR_GRPS.length;i++){
-    const grp=SR_GRPS[i];const items=srResults[i];
+  for(const grp of SR_GRPS){
+    tick(`Loading ${grp.label}…`);
+    const items=await fetchItems(BOARD_SR,grp.gid,start,end,SR_COLS,ED_SR);
     for(const item of items){
       const cv=cvMap(item);
       const names=parsePeopleText(cv['person']);
       const sIdx=parseStatusIdx(cv['status81']);
       const ts=parseNum(cv['numbers']);
       const nt=parseNum(cv['numbers0']);
-      const cf=ts*4;
+      const cf=ts*2;
       deptData[grp.key]++;
       if(grp.key==='s1'){
         deptData.totalSale+=ts;deptData.newTicketAmt+=nt;deptData.costCeiling+=cf;
@@ -433,8 +428,9 @@ async function loadData(start,end){
       }
     }
   }
-  for(let i=0;i<LC_GRPS.length;i++){
-    const grp=LC_GRPS[i];const items=lcResults[i];
+  for(const grp of LC_GRPS){
+    tick(`Loading lifecycle: ${grp.label}…`);
+    const items=await fetchItems(BOARD_SR,grp.gid,start,end,['person'],ED_SR);
     for(const item of items){const cv=cvMap(item);const names=parsePeopleText(cv['person']);for(const name of names){if(EXCL.includes(name))continue;const a=ensureAgent(agentMap,name);a[grp.key]++;}}
   }
   agents=Object.values(agentMap);
@@ -442,11 +438,11 @@ async function loadData(start,end){
   agents=agents.filter(a=>a.gT>0||a.lcNew>0||a.lcAwaiting>0);
   mktData=Object.values(mktMap).filter(m=>m.name!=='Unknown').sort((a,b)=>(b.accepted+b.autoaccept+b.rejected)-(a.accepted+a.autoaccept+a.rejected));
   ssData={sold:{count:0,cost:0,sold:0,profCount:0,lossCount:0},partSold:{count:0,cost:0,sold:0},notSold:{count:0,cost:0,sold:0},spoiled:{count:0,cost:0,sold:0},canceled:{count:0,cost:0,sold:0}};
-  for(let i=0;i<SS_GRPS.length;i++){
-    const grp=SS_GRPS[i];const items=ssResults[i];
-    const cv2=items.map(cvMap);
-    for(let j=0;j<items.length;j++){
-      const cv=cv2[j];const lbl=cv['status']?.text?.trim()||'';
+  for(const grp of SS_GRPS){
+    tick(`Loading Subs Sales: ${grp.label}…`);
+    const items=await fetchItemsServerDate(BOARD_SS,grp.gid,start,end,['status','numeric_mkts722d','numeric_mktsck8h']);
+    for(const item of items){
+      const cv=cvMap(item);const lbl=cv['status']?.text?.trim()||'';
       const cost=parseNum(cv['numeric_mkts722d']);const sold=parseNum(cv['numeric_mktsck8h']);
       if(lbl==='Sold'){ssData.sold.count++;ssData.sold.cost+=cost;ssData.sold.sold+=sold;if(sold>cost)ssData.sold.profCount++;else ssData.sold.lossCount++;}
       else if(lbl==='Partially Sold'){ssData.partSold.count++;ssData.partSold.cost+=cost;ssData.partSold.sold+=sold;}
@@ -526,10 +522,10 @@ function renderLossMitKPIs(){
   document.getElementById('lossMitKpis').innerHTML=`
     <div class="kcard" style="border-color:var(--purple)33"><div class="klabel">Mitigated Loss %</div><div class="kval" style="color:${mitigColor};font-size:28px">${pct(mitigatedPct)}</div><div class="ksub">of Cost Ceiling avoided</div></div>
     <div class="kcard"><div class="klabel">Mitigated Amount</div><div class="kval" style="color:var(--green)">${fmt$(mitigatedAmt)}</div><div class="ksub">ceiling − new ticket</div></div>
-    <div class="kcard"><div class="klabel">Cost Ceiling</div><div class="kval">${fmt$(ceiling)}</div><div class="ksub">Max possible exposure</div></div>
+    <div class="kcard"><div class="klabel">Cost Ceiling</div><div class="kval">${fmt$(ceiling)}</div><div class="ksub">2× sale value · max exposure</div></div>
     <div class="kcard"><div class="klabel">Total Sale Value</div><div class="kval">${fmt$(totalSale)}</div><div class="ksub">Original order value</div></div>
     <div class="kcard"><div class="klabel">New Ticket Amount</div><div class="kval">${fmt$(newTicket)}</div><div class="ksub">Actual spend · ${pct(actualSpend)} of ceiling</div></div>
-    <div class="kcard"><div class="klabel">Ticket / Sale Ratio</div><div class="kval ${ratio<=1?'roi-pos':'roi-neg'}">${fmtR(ratio)}x</div><div class="ksub">${ratio<=1?'Spent less than sale':'Spent more than sale'}</div></div>`;
+    <div class="kcard"><div class="klabel">New Ticket % of Sale</div><div class="kval ${ratio<=1?'roi-pos':'roi-neg'}">${(ratio*100).toFixed(2)}%</div><div class="ksub">New ticket as % of sale value</div></div>`;
 }
 
 function renderBars(){
@@ -614,7 +610,7 @@ function renderSpendRatio(){
   const sorted=[...agents].filter(a=>a.totalSale>0||a.newTicketAmt>0).sort((a,b)=>b.totalSale-a.totalSale);
   const T=sorted.reduce((t,a)=>({ts:t.ts+a.totalSale,nt:t.nt+a.newTicketAmt}),{ts:0,nt:0});
   const tr=T.ts>0?T.nt/T.ts:0;
-  document.getElementById('spendTbody').innerHTML=sorted.map(a=>{const ratio=a.totalSale>0?a.newTicketAmt/a.totalSale:0;return`<tr><td class="l">${a.name}</td><td>${fmt$(a.totalSale)}</td><td>${fmt$(a.newTicketAmt)}</td><td class="${ratio<=1?'roi-pos':'roi-neg'}">${fmtR(ratio)}x</td></tr>`;}).join('')+`<tr class="tr-total"><td class="l">Team Total</td><td>${fmt$(T.ts)}</td><td>${fmt$(T.nt)}</td><td class="${tr<=1?'roi-pos':'roi-neg'}">${fmtR(tr)}x</td></tr>`;
+  document.getElementById('spendTbody').innerHTML=sorted.map(a=>{const ratio=a.totalSale>0?a.newTicketAmt/a.totalSale:0;return`<tr><td class="l">${a.name}</td><td>${fmt$(a.totalSale)}</td><td>${fmt$(a.newTicketAmt)}</td><td class="${ratio<=1?'roi-pos':'roi-neg'}">${(ratio*100).toFixed(2)}%</td></tr>`;}).join('')+`<tr class="tr-total"><td class="l">Team Total</td><td>${fmt$(T.ts)}</td><td>${fmt$(T.nt)}</td><td class="${tr<=1?'roi-pos':'roi-neg'}">${fmtR(tr)}x</td></tr>`;
 }
 
 function renderLifecycle(){
