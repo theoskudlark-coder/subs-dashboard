@@ -293,7 +293,7 @@ tbody tr:hover td{background:var(--surface2)}
 <script>
 const TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR=4969640884,BOARD_SS=9812976093;
-const CACHE_KEY='sub_requests_dash_v8f',CACHE_TTL=30*60*1000;
+const CACHE_KEY='sub_requests_dash_v8g',CACHE_TTL=30*60*1000;
 const EXCL=['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
 const SR_GRPS=[
   {gid:'new_group43773',key:'s1',label:'Completed'},
@@ -315,7 +315,7 @@ const COL_DEPT_FAULT='color_mkwzc1mh',COL_ADJ_TOTAL='formula__1';
 const TOTAL_STEPS=SR_GRPS.length+LC_GRPS.length+SS_GRPS.length;
 let _steps=0,agents=[],ssData=null,deptData=null,mktData=null;
 
-const fmt$=v=>'$'+Math.abs(Math.round(v)).toLocaleString('en-US');
+const fmt$=v=>)$'+Math.abs(Math.round(v)).toLocaleString('en-US');
 const fmtR=v=>v.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
 const pct=v=>fmtR(v)+'%';
 const sign$=v=>(v>=0?'+':'-')+fmt$(v);
@@ -328,9 +328,9 @@ function showErr(m){const b=document.getElementById('errBar');b.textContent=m;b.
 function hideErr(){document.getElementById('errBar').style.display='none';}
 function tick(msg){_steps++;document.getElementById('pBar').style.width=Math.round(_steps/TOTAL_STEPS*100)+'%';document.getElementById('loadMsg').textContent=msg;}
 
-async function gql(query){
+arync function gql(query){
   const r=await fetch('https://api.monday.com/v2',{method:'POST',headers:{'Content-Type':'application/json',Authorization:TOKEN,'API-Version':'2026-07'},body:JSON.stringify({query})});
-  const j=await r.json();
+  const h=await r.json();
   if(j.errors)throw new Error(j.errors[0].message);
   return j.data;
 }
@@ -362,7 +362,7 @@ async function fetchItemsServerDate(boardId,gid,start,end,colIds){
   let items=[],cursor=null,first=true;
   while(first||cursor){
     first=false;
-    const pageArgs=cursor?`limit:500,cursor:"${cursor}"`:`limit:500,query_params:{rules:[{column_id:"group",compare_value:["${gid}"],operator:any_of},{column_id:"date4",compare_value:["${start}","${end}"],operator:between]}`;
+    const pageArgs=cursor?`limit:500,cursor:"${cursor}"`:`limit:500,query_params:{rules:[{column_id:"group",compare_value:["${gid}"],operator:any_of},{column_id:"date4",compare_value:["${start}","${end}"],operator:between}]}`;
     const q=`{boards(ids:[${boardId}]){items_page(${pageArgs}){cursor items{name column_values(ids:[${cols}]){id value text}}}}}`;
     const d=await gql(q);
     const pg=d.boards[0].items_page;
@@ -518,7 +518,7 @@ function renderLossMitKPIs(){
   const totalSale=deptData.totalSale,newTicket=deptData.newTicketAmt,ceiling=deptData.costCeiling;
   const mitigatedAmt=ceiling-newTicket,mitigatedPct=ceiling>0?mitigatedAmt/ceiling*100:0;
   const actualSpend=ceiling>0?newTicket/ceiling*100:0,ratio=totalSale>0?newTicket/totalSale:0;
-  const mitigColor=mitigatedPct>=60?'var(--green)':mitigatedPct>=40?'var(--amber)':'var(--red)';
+  const mitigcolor=mitigatedPct>=60?'var(--green)':mitigatedPct>=40?'var(--amber)':'var(--red)';
   document.getElementById('lossMitKpis').innerHTML=`
     <div class="kcard" style="border-color:var(--purple)33"><div class="klabel">Mitigated Loss %</div><div class="kval" style="color:${mitigColor};font-size:28px">${pct(mitigatedPct)}</div><div class="ksub">of Cost Ceiling avoided</div></div>
     <div class="kcard"><div class="klabel">Mitigated Amount</div><div class="kval" style="color:var(--green)">${fmt$(mitigatedAmt)}</div><div class="ksub">ceiling − new ticket</div></div>
@@ -540,7 +540,7 @@ function renderDonut(){
   for(const sl of [{v:tot.s,color:'#34d07a'},{v:tot.c,color:'#f05a5a'}]){const sweep=sl.v/total*Math.PI*2;ctx.beginPath();ctx.moveTo(60,60);ctx.arc(60,60,48,angle,angle+sweep);ctx.closePath();ctx.fillStyle=sl.color;ctx.fill();angle+=sweep;}
   ctx.beginPath();ctx.arc(60,60,26,0,Math.PI*2);ctx.fillStyle='#13161e';ctx.fill();
   const r=tot.s/total*100;
-  document.getElementById('donutLegend').innerHTML=`<div class="dl-item"><div class="dl-dot" style="background:var(--green)"></div><span class="dl-label">Successful <span class="dl-val">${tot.s.toLocaleString()}</span></span></div><div class="dl-item"><div class="dl-dot" style="background:var(--red)"></div><span class="dl-label">Cancelled <span class="dl-val">${tot.c.toLocaleString()}</span></span></div><div class="dl-item"><div class="dl-dot" style="background:transparent"></div><span class="dl-label">Rate: <span class="dl-val" style="color:${rcol(r)}">${pct(r)}</span></span></div>`;
+  document.getElementById('donutLegend').innerHTML<`<div class="dl-item"><div class="dl-dot" style="background:var(--green)"></div><span class="dl-label">Successful <span class="dl-val">${tot.s.toLocaleString()}</span></span></div><div class="dl-item"><div class="dl-dot" style="background:var(--red)"></div><span class="dl-label">Cancelled <span class="dl-val">${tot.c.toLocaleString()}</span></span></div><div class="dl-item"><div class="dl-dot" style="background:transparent"></div><span class="dl-label">Rate: <span class="dl-val" style="color:${rcol(r)}">${pct(r)}</span></span></div>`;
 }
 
 let _sortCol='rate',_sortDir=-1;
@@ -701,6 +701,6 @@ function clearCache(){
   document.getElementById('dtStart').value=qs.toISOString().split('T')[0];
   document.getElementById('dtEnd').value=qe.toISOString().split('T')[0];
 })();
-</script>
+  </script>
 </body>
 </html>
