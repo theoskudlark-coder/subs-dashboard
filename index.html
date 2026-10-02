@@ -293,7 +293,7 @@ tbody tr:hover td{background:var(--surface2)}
 <script>
 const TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0ODU3MzEwMSwiYWFpIjoxMSwidWlkIjo0NzI4ODg0NCwiaWFkIjoiMjAyNS0wOC0wOVQxOToyNDo0NS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NDcyNzE0NCwicmduIjoidXNlMSJ9.JTySiyK0LeaLsLXXnAWjOo1Ncwzt0kdnhW9dOhK6tkw';
 const BOARD_SR=4969640884,BOARD_SS=9812976093;
-const CACHE_KEY='sub_requests_dash_v8h',CACHE_TTL=30*60*1000;
+const CACHE_KEY='sub_requests_dash_v8i',CACHE_TTL=30*60*1000;
 const EXCL=['Jessica Gillis','brad.bowman@automatiq.com','Miriam Parveen','Theo Skudlark'];
 const SR_GRPS=[
   {gid:'new_group43773',key:'s1',label:'Completed'},
@@ -409,7 +409,7 @@ async function loadData(start,end){
       const sIdx=parseStatusIdx(cv['status81']);
       const ts=parseNum(cv['numbers']);
       const nt=parseNum(cv['numbers0']);
-      const cf=ts*2;
+      const cf=ts*4;
       deptData[grp.key]++;
       if(grp.key==='s1'){
         deptData.totalSale+=ts;deptData.newTicketAmt+=nt;deptData.costCeiling+=cf;
@@ -522,7 +522,7 @@ function renderLossMitKPIs(){
   document.getElementById('lossMitKpis').innerHTML=`
     <div class="kcard" style="border-color:var(--purple)33"><div class="klabel">Mitigated Loss %</div><div class="kval" style="color:${mitigColor};font-size:28px">${pct(mitigatedPct)}</div><div class="ksub">of Cost Ceiling avoided</div></div>
     <div class="kcard"><div class="klabel">Mitigated Amount</div><div class="kval" style="color:var(--green)">${fmt$(mitigatedAmt)}</div><div class="ksub">ceiling − new ticket</div></div>
-    <div class="kcard"><div class="klabel">Cost Ceiling</div><div class="kval">${fmt$(ceiling)}</div><div class="ksub">2× sale value · max exposure</div></div>
+    <div class="kcard"><div class="klabel">Cost Ceiling</div><div class="kval">${fmt$(ceiling)}</div><div class="ksub">4× sale value · max exposure</div></div>
     <div class="kcard"><div class="klabel">Total Sale Value</div><div class="kval">${fmt$(totalSale)}</div><div class="ksub">Original order value</div></div>
     <div class="kcard"><div class="klabel">New Ticket Amount</div><div class="kval">${fmt$(newTicket)}</div><div class="ksub">Actual spend · ${pct(actualSpend)} of ceiling</div></div>
     <div class="kcard"><div class="klabel">New Ticket % of Sale</div><div class="kval ${ratio<=1?'roi-pos':'roi-neg'}">${(ratio*100).toFixed(2)}%</div><div class="ksub">New ticket as % of sale value</div></div>`;
